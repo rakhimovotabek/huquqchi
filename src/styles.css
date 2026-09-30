@@ -1,0 +1,419 @@
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+  background: #ffffff;
+  color: #1a1a1a;
+}
+
+.center-screen {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+}
+
+.card {
+  background: #fff;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  padding: 16px;
+  margin-bottom: 16px;
+}
+
+.login-card {
+  width: 100%;
+  max-width: 340px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.login-card h1 {
+  text-align: center;
+  font-size: 1.4rem;
+  margin-bottom: 8px;
+}
+
+label {
+  font-size: 0.85rem;
+  color: #444;
+}
+
+input,
+textarea {
+  width: 100%;
+  padding: 8px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  font-size: 1rem;
+  font-family: inherit;
+}
+
+button {
+  padding: 8px 14px;
+  border: 1px solid #333;
+  background: #1a1a1a;
+  color: #fff;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.95rem;
+}
+
+button:hover {
+  background: #333;
+}
+
+button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.error {
+  background: #fdecea;
+  color: #a12622;
+  border: 1px solid #f5c2c0;
+  padding: 8px 12px;
+  border-radius: 4px;
+  margin-bottom: 12px;
+  font-size: 0.9rem;
+}
+
+.success {
+  background: #e9f7ef;
+  color: #1e7e34;
+  border: 1px solid #b7e4c7;
+  padding: 8px 12px;
+  border-radius: 4px;
+  margin-bottom: 12px;
+  font-size: 0.9rem;
+}
+
+.muted {
+  color: #777;
+  font-size: 0.85rem;
+}
+
+.topbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 20px;
+  border-bottom: 1px solid #ddd;
+}
+
+.tabs {
+  display: flex;
+  gap: 4px;
+  padding: 0 20px;
+  border-bottom: 1px solid #ddd;
+}
+
+.tabs button {
+  background: none;
+  color: #333;
+  border: none;
+  border-bottom: 3px solid transparent;
+  border-radius: 0;
+  padding: 10px 14px;
+}
+
+.tabs button.active {
+  border-bottom: 3px solid #1a1a1a;
+  font-weight: 600;
+}
+
+.tabs button:hover {
+  background: #f2f2f2;
+}
+
+.content {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 20px;
+}
+
+.inline-form {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.inline-form input {
+  width: auto;
+  flex: 1;
+  min-width: 140px;
+}
+
+.stack-form {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 24px;
+}
+
+.simple-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: 20px;
+}
+
+.simple-table th,
+.simple-table td {
+  text-align: left;
+  padding: 8px 10px;
+  border-bottom: 1px solid #eee;
+}
+
+.simple-table th {
+  background: #f7f7f7;
+}
+
+.test-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.test-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.timer {
+  font-weight: 600;
+  font-size: 1.1rem;
+  padding: 6px 12px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+}
+
+.options {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.option {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 1rem;
+}
+
+.option input {
+  width: auto;
+}
+
+.nav-buttons {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.button-row {
+  display: flex;
+  gap: 8px;
+}
+
+@media (max-width: 600px) {
+  .content {
+    padding: 12px;
+  }
+  .topbar {
+    padding: 10px 12px;
+  }
+}
+
+/* Savol matnidagi qator uzilishlari (masalan, 1. Tojikiston / 2. Urugvay ...) saqlanadi */
+.question-text {
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+/* ---------- Barcha savollar oynasi ---------- */
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  z-index: 100;
+}
+
+.modal-card {
+  background: #fff;
+  border-radius: 12px;
+  padding: 20px;
+  width: 100%;
+  max-width: 560px;
+  max-height: 85vh;
+  overflow-y: auto;
+}
+
+.modal-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 14px;
+}
+
+.modal-head h3 {
+  margin: 0;
+}
+
+.modal-close {
+  background: none;
+  color: #333;
+  border: none;
+  font-size: 1.2rem;
+  padding: 4px 8px;
+}
+
+.modal-close:hover {
+  background: #eee;
+}
+
+.q-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(46px, 1fr));
+  gap: 8px;
+}
+
+.q-cell {
+  height: 44px;
+  padding: 0;
+  font-weight: 700;
+  font-size: 0.95rem;
+  border-radius: 8px;
+  border: 2px solid #999;
+}
+
+.q-answered,
+.q-correct {
+  background: #22c55e;
+  color: #fff;
+  border-color: #16a34a;
+}
+
+.q-incorrect {
+  background: #ef4444;
+  color: #fff;
+  border-color: #dc2626;
+}
+
+.q-pending {
+  background: #facc15;
+  color: #1a1a1a;
+  border-color: #ca8a04;
+}
+
+.q-unanswered {
+  background: #fff;
+  color: #1a1a1a;
+  border-color: #999;
+}
+
+.q-cell:hover {
+  filter: brightness(0.93);
+}
+
+.q-cell.q-unanswered:hover {
+  background: #f1f1f1;
+  filter: none;
+}
+
+.q-current {
+  outline: 3px solid #000;
+  outline-offset: 2px;
+}
+
+.q-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 16px;
+  margin-top: 16px;
+  padding-top: 12px;
+  border-top: 1px solid #ddd;
+  font-size: 0.85rem;
+  color: #444;
+}
+
+.q-legend span {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.dot {
+  display: inline-block;
+  width: 14px;
+  height: 14px;
+  border-radius: 4px;
+  border: 2px solid #999;
+}
+
+.dot.q-current {
+  outline-width: 2px;
+  outline-offset: 1px;
+}
+
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.secondary-btn {
+  background: #fff;
+  color: #1a1a1a;
+}
+
+.secondary-btn:hover {
+  background: #f1f1f1;
+}
+
+/* ---------- Test holati (ruxsat) ---------- */
+.badge {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.badge-locked {
+  background: #eee;
+  color: #555;
+}
+
+.badge-allowed {
+  background: #e9f7ef;
+  color: #1e7e34;
+}
+
+.badge-one_time {
+  background: #fff4d6;
+  color: #8a5a00;
+}
+
+.action-cell {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
