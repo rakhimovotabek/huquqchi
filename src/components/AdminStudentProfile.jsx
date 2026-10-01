@@ -2,6 +2,8 @@ import { useEffect, useState } from 'react'
 import { supabase } from '../lib/supabase'
 import { setStudentPassword } from '../lib/students'
 import { formatDate } from '../lib/format'
+import { deleteAttempts } from '../lib/deleteAttempts'
+import { TrashIcon } from './Icons'
 import AdminReviewAttempt from './AdminReviewAttempt'
 import ReviewResult from './ReviewResult'
 
@@ -37,6 +39,20 @@ export default function AdminStudentProfile({ student, onBack }) {
     if (error) setError('Natijalarni yuklashda xatolik: ' + error.message)
     else setAttempts(data)
     setLoading(false)
+  }
+
+  async function removeAttempt(a) {
+    const ok = window.confirm(
+      `"${a.tests?.title}" natijasi o'chirilsinmi?\n\nBu qaytarib bo'lmaydi: natija va javoblar butunlay o'chadi, talabaning umumiy foizi qayta hisoblanadi.`
+    )
+    if (!ok) return
+    setError('')
+    try {
+      await deleteAttempts([a.id])
+      loadAttempts()
+    } catch (err) {
+      setError("O'chirishda xatolik: " + err.message)
+    }
   }
 
   async function togglePassword() {
@@ -203,6 +219,14 @@ export default function AdminStudentProfile({ student, onBack }) {
                       {!done && <button onClick={() => setOpenAttempt({ id: a.id, mode: 'grade' })}>Baholash</button>}
                       <button className="secondary-btn" onClick={() => setOpenAttempt({ id: a.id, mode: 'view' })}>
                         Ko'rish
+                      </button>
+                      <button
+                        className="icon-btn"
+                        title="O'chirish"
+                        aria-label="O'chirish"
+                        onClick={() => removeAttempt(a)}
+                      >
+                        <TrashIcon />
                       </button>
                     </div>
                   </td>

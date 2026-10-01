@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '../lib/supabase'
 import { formatDate } from '../lib/format'
+import { deleteAttempts } from '../lib/deleteAttempts'
+import { TrashIcon } from './Icons'
 import AdminReviewAttempt from './AdminReviewAttempt'
 import ReviewResult from './ReviewResult'
 
@@ -9,6 +11,8 @@ export default function AdminResults() {
   const [allTests, setAllTests] = useState([])
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(true)
+  const [notice, setNotice] = useState('')
+  const [selected, setSelected] = useState(() => new Set())
   // { id, mode: 'grade' | 'view', studentName }
   const [openAttempt, setOpenAttempt] = useState(null)
 
@@ -37,6 +41,24 @@ export default function AdminResults() {
     const { data: testRows } = await supabase.from('tests').select('id, title, access')
     if (testRows) setAllTests(testRows)
     setLoading(false)
+  }
+
+  async function removeAttempts(ids, label) {
+    if (ids.length === 0) return
+    const ok = window.confirm(
+      `${label} o'chirilsinmi?\n\nBu qaytarib bo'lmaydi: natija va javoblar butunlay o'chadi, talabaning umumiy foizi va reyting qayta hisoblanadi.`
+    )
+    if (!ok) return
+    setError('')
+    setNotice('')
+    try {
+      const n = await deleteAttempts(ids)
+      setNotice(`${n} ta natija o'chirildi.`)
+      setSelected(new Set())
+      loadAttempts()
+    } catch (err) {
+      setError("O'chirishda xatolik: " + err.message)
+    }
   }
 
   if (openAttempt?.mode === 'grade') {
@@ -75,6 +97,24 @@ export default function AdminResults() {
 
   const activeFilters = [fTest, nameQuery, fFrom, fTo].filter(Boolean).length
 
+  // Faqat ko'rinib turgan (filtrdan o'tgan) natijalar tanlanadi
+  const visibleIds = filtered.map((a) => a.id)
+  const allChecked = visibleIds.length > 0 && visibleIds.every((id) => selected.has(id))
+  const selectedCount = visibleIds.filter((id) => selected.has(id)).length
+
+  function toggleAll() {
+    setSelected(allChecked ? new Set() : new Set(visibleIds))
+  }
+
+  function toggleOne(id) {
+    setSelected((prev) => {
+      const next = new Set(prev)
+      if (next.has(id)) next.delete(id)
+      else next.add(id)
+      return next
+    })
+  }
+
   function clearFilters() {
     setFTest('')
     setFStudent('')
@@ -86,6 +126,7 @@ export default function AdminResults() {
     <div>
       <h2>Natijalar</h2>
       {error && <div className="error">{error}</div>}
+      {notice && <div className="success">{notice}</div>}
       <div className="action-cell">
         <button className="secondary-btn" onClick={() => setFilterOpen((v) => !v)}>
           Filtr{activeFilters > 0 ? ` (${activeFilters})` : ''}
@@ -134,6 +175,22 @@ export default function AdminResults() {
           Topildi: {filtered.length} / {attempts.length}
         </p>
       )}
+      {selectedCount > 0 && (
+        <div className="bulk-bar">
+          <strong>{selectedCount} ta natija tanlandi</strong>
+          <div className="action-cell">
+            <button
+              className="btn-red"
+              onClick={() => removeAttempts(visibleIds.filter((id) => selected.has(id)), `${selectedCount} ta natija`)}
+            >
+              Tanlanganlarni o'chirish
+            </button>
+            <button className="secondary-btn" onClick={() => setSelected(new Set())}>
+              Bekor qilish
+            </button>
+          </div>
+        </div>
+      )}
       {loading ? (
         <p>Yuklanmoqda...</p>
       ) : (
@@ -142,6 +199,9 @@ export default function AdminResults() {
         <table className="simple-table">
           <thead>
             <tr>
+              <th className="check-col">
+                <input type="checkbox" checked={allChecked} onChange={toggleAll} aria-label="Hammasini tanlash" />
+              </th>
               <th>Talaba</th>
               <th>Test</th>
               <th>Ball</th>
@@ -152,7 +212,15 @@ export default function AdminResults() {
           </thead>
           <tbody>
             {filtered.map((a) => (
-              <tr key={a.id}>
+              <tr key={a.id} className={selected.has(a.id) ? 'row-selected' : ''}>
+                <td className="check-col">
+                  <input
+                    type="checkbox"
+                    checked={selected.has(a.id)}
+                    onChange={() => toggleOne(a.id)}
+                    aria-label="Natijani tanlash"
+                  />
+                </td>
                 <td>{a.profiles?.username}</td>
                 <td>{a.tests?.title}</td>
                 <td>{a.status === 'completed' ? `${a.score} / ${a.total_questions}` : '—'}</td>
@@ -169,13 +237,21 @@ export default function AdminResults() {
                     >
                       Ko'rish
                     </button>
+                    <button
+                      className="icon-btn"
+                      title="O'chirish"
+                      aria-label="O'chirish"
+                      onClick={() => removeAttempts([a.id], `${a.profiles?.username} ning \"${a.tests?.title}\" natijasi`)}
+                    >
+                      <TrashIcon />
+                    </button>
                   </div>
                 </td>
               </tr>
             ))}
             {filtered.length === 0 && (
               <tr>
-                <td colSpan="6">
+                <td colSpan="7">
                   {attempts.length === 0 ? "Hozircha natijalar yo'q" : 'Filtrga mos natija topilmadi'}
                 </td>
               </tr>

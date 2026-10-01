@@ -170,6 +170,10 @@ drop policy if exists "attempts_update_admin" on attempts;
 create policy "attempts_update_admin" on attempts
   for update using (public.is_admin());
 
+drop policy if exists "attempts_delete_admin" on attempts;
+create policy "attempts_delete_admin" on attempts
+  for delete using (public.is_admin());
+
 -- Answers: a student can read/insert answers for their own attempts; admins can read/update all.
 drop policy if exists "answers_select_own" on answers;
 create policy "answers_select_own" on answers

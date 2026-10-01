@@ -57,7 +57,9 @@ export default function StudentPanel({ profile, onLogout }) {
         </button>
       </nav>
       <main className="content">
-        {tab === 'tests' && <StudentTests profile={profile} />}
+        {tab === 'tests' && (
+          <StudentTests profile={profile} newCount={newCount} onOpenResults={() => setTab('results')} />
+        )}
         {tab === 'results' && <StudentResults profile={profile} onSeen={refreshNew} />}
         {tab === 'profile' && <StudentProfile profile={profile} />}
       </main>

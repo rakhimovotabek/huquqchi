@@ -3,30 +3,16 @@ import { supabase } from '../lib/supabase'
 import { formatDate } from '../lib/format'
 import TakeTest from './TakeTest'
 
-export default function StudentTests({ profile }) {
+export default function StudentTests({ profile, newCount = 0, onOpenResults }) {
   const [tests, setTests] = useState([])
   const [resumeIds, setResumeIds] = useState(() => new Set())
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(true)
   const [activeTest, setActiveTest] = useState(null)
-  const [announcement, setAnnouncement] = useState(null)
 
   useEffect(() => {
-    if (!activeTest) {
-      loadTests()
-      loadAnnouncement()
-    }
+    if (!activeTest) loadTests()
   }, [activeTest])
-
-  async function loadAnnouncement() {
-    const { data } = await supabase
-      .from('announcements')
-      .select('message, created_at')
-      .eq('active', true)
-      .order('created_at', { ascending: false })
-      .limit(1)
-    setAnnouncement(data?.[0] || null)
-  }
 
   async function loadTests() {
     setLoading(true)
@@ -76,9 +62,12 @@ export default function StudentTests({ profile }) {
 
   return (
     <div>
-      {announcement && (
-        <div className="banner announcement" role="status">
-          <strong>E'lon:</strong> <span className="question-text">{announcement.message}</span>
+      {newCount > 0 && (
+        <div className="banner announcement dismissible" role="status">
+          <span>
+            <strong>Yangi natija!</strong> Ustoz {newCount} ta ishingizni tekshirdi.
+          </span>
+          <button onClick={onOpenResults}>Natijalarni ko'rish</button>
         </div>
       )}
       <h2>Mavjud testlar</h2>

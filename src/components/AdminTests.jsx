@@ -4,7 +4,6 @@ import { fetchAll } from '../lib/paged'
 import { formatDate } from '../lib/format'
 import AdminTestEdit from './AdminTestEdit'
 import AdminTestStats from './AdminTestStats'
-import AdminAnnouncement from './AdminAnnouncement'
 import { TrashIcon, PencilIcon } from './Icons'
 import { extractQuestions, parseDuration, readMeta, validateQuestions } from '../lib/testJson'
 
@@ -214,8 +213,6 @@ export default function AdminTests() {
       <h2>Testlar</h2>
       {error && <div className="error">{error}</div>}
       {notice && <div className="success">{notice}</div>}
-
-      <AdminAnnouncement />
 
       <form className="form-card" onSubmit={handleImport}>
         <h3 className="card-title">Yangi test qo'shish</h3>

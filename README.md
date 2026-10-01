@@ -36,7 +36,7 @@ https://nodejs.org saytidan Node.js 18 yoki undan yangi versiyasini o'rnating.
 
 > **Talaba parollarini ko'rish uchun** (admin → Talabalar → talaba profili) `supabase/migration_student_passwords.sql` faylini ham SQL Editor'da bir marta ishga tushiring. Parollar oddiy matn ko'rinishida saqlanadi va faqat administrator o'qiy oladi.
 
-> **v3 yangilanishi (MUHIM):** profil, parolni o'zgartirish, "Yangi natija" belgisi va e'lonlar ishlashi uchun `supabase/migration_v3.sql` faylini SQL Editor'da bir marta to'liq ishga tushiring. Qayta ishga tushirsangiz ham xavfsiz, ma'lumotlar o'chmaydi.
+> **v3 yangilanishi:** profil, parolni o'zgartirish, "Yangi natija" belgisi ishlashi uchun `supabase/migration_v3.sql` faylini SQL Editor'da bir marta to'liq ishga tushiring. Qayta ishga tushirsangiz ham xavfsiz, ma'lumotlar o'chmaydi.
 
 > **Eski baza uchun (yangilash):** agar ilovani avval ishlatgan bo'lsangiz, shu `schema.sql` faylini yana bir marta to'liq ishga tushiring. Fayl qayta ishga tushirilganda ma'lumotlarni o'chirmaydi: testlar jadvaliga `access` (kirish huquqi) ustunini qo'shadi va yangi qoidalarni o'rnatadi. **Mavjud testlar avtomatik "Ruxsat berilgan" holatda qoladi**, ya'ni talabalarga ko'rinishda davom etadi.
 
@@ -127,11 +127,11 @@ Chop etilgan manzilni (odatda `http://localhost:5173`) oching va administrator s
 - **Talaba uchun:** oxirgi 5 daqiqada taymer qizarib ogohlantiradi; topshirishdan oldin javob berilmagan va belgilangan savollar ko'rsatiladi; savolni "qayta ko'rish uchun belgilash" mumkin (savollar oynasida sariq belgi); javoblar shu qurilmada vaqtincha saqlanadi, sahifa yangilansa yo'qolmaydi.
 
 **v3 imkoniyatlari:**
-- **E'lon (admin → Testlar, eng tepada):** qisqa xabar yozing (masalan, "Ertaga soat 10:00 da test") va "E'lonni joylash" bosing. Talabalar uni "Testlar" sahifasi tepasida ko'radi. "Olib tashlash" e'lonni yashiradi.
 - **Testni vaqt bo'yicha ochish (admin → Testlar → qalam belgisi):** "Test ochiladigan vaqt" bo'limida ochilish va yopilish vaqtini qo'ying (masalan, 02.10.2026 10:00 → 12:00). Test faqat shu oraliqda boshlanadi. Test "Yopiq" bo'lsa, saqlaganda avtomatik "Ruxsat berilgan" ga o'tadi.
 - **Profil (talaba, yuqori o'ngdagi odam belgisi):** umumiy foiz, natijalar grafigi, eng zaif testlar va **parolni o'zgartirish**. Yangi parol "Parolni ko'rish" tugmasida ham yangilanadi.
 - **Xatolarni qayta ishlash (talaba):** natijani ko'rib chiqishda, xato qilingan savollar bo'lsa, "Xatolarni qayta ishlash" tugmasi chiqadi. Faqat shu savollar qayta beriladi; hech narsa saqlanmaydi, rasmiy natija o'zgarmaydi.
-- **Yangi natija:** admin ochiq javoblarni baholab bo'lgach, talabaning "Natijalar" yorlig'ida "Yangi natija" belgisi chiqadi; talaba natijani ochgach yo'qoladi.
+- **Yangi natija:** admin ochiq javoblarni baholab bo'lgach, talabaning "Testlar" sahifasi tepasida "Ustoz ishingizni tekshirdi" xabari, "Natijalar" yorlig'ida esa "Yangi natija" belgisi chiqadi; talaba natijani ochgach yo'qoladi.
+- **Natijalarni o'chirish (admin):** "Natijalar" bo'limida axlat qutisi belgisi bitta natijani, belgilangan katakchalar esa bir nechtasini o'chiradi (masalan, sinov testlari). Talaba profilida ham bor. Qaytarib bo'lmaydi; foizlar va reyting qayta hisoblanadi. Bir martalik testning natijasi o'chirilsa, talaba uni qayta topshira oladi. Buning uchun `supabase/migration_v4.sql` ni bir marta ishga tushiring.
 
 **Test JSON formati:**
 
