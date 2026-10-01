@@ -10,6 +10,7 @@ export default function AdminTestStats({ test, onBack }) {
   const [attempts, setAttempts] = useState([])
   const [perQuestion, setPerQuestion] = useState([])
   const [showAll, setShowAll] = useState(false)
+  const [showAnswers, setShowAnswers] = useState(true)
 
   useEffect(() => {
     load()
@@ -74,20 +75,25 @@ export default function AdminTestStats({ test, onBack }) {
   const best = completed.length ? Math.max(...completed.map((a) => a.score / a.total_questions)) : null
   const pending = attempts.filter((a) => a.status === 'pending_review').length
   const visible = showAll ? perQuestion : perQuestion.slice(0, 10)
+  const pctByIndex = {}
+  perQuestion.forEach((x) => {
+    pctByIndex[x.i] = x.pct
+  })
 
   return (
     <div>
       <button className="secondary-btn" onClick={onBack}>
         ← Testlarga qaytish
       </button>
-      <h2>Statistika: {test.title}</h2>
+      <h2>{test.title}</h2>
       {error && <div className="error">{error}</div>}
       {loading ? (
         <p>Yuklanmoqda...</p>
-      ) : attempts.length === 0 ? (
-        <div className="card">Bu testni hali hech kim topshirmagan.</div>
       ) : (
         <>
+          {attempts.length === 0 && <div className="card">Bu testni hali hech kim topshirmagan.</div>}
+          {attempts.length > 0 && (
+            <>
           <div className="stat-grid">
             <div className="card stat-card">
               <div className="muted">Topshirishlar</div>
@@ -146,6 +152,50 @@ export default function AdminTestStats({ test, onBack }) {
             <h3 className="card-title">Reyting (eng yaxshi 10 ta)</h3>
             <Leaderboard testId={test.id} />
           </div>
+            </>
+          )}
+
+          <div className="list-head">
+            <h3>Savollar ({test.questions_json.length})</h3>
+            <button className="secondary-btn small" onClick={() => setShowAnswers((v) => !v)}>
+              {showAnswers ? 'Javoblarni yashirish' : "Javoblarni ko'rsatish"}
+            </button>
+          </div>
+          {test.questions_json.map((q, i) => {
+            const st = pctByIndex[i]
+            return (
+              <div key={i} className="card question-view">
+                <div className="q-view-head">
+                  <strong>{i + 1}-savol</strong>
+                  {st !== undefined && <span className="chip">{st}% to'g'ri javob bergan</span>}
+                </div>
+                <p className="question-text">{q.question}</p>
+                {q.type === 'mcq' ? (
+                  <div className="options">
+                    {q.options.map((opt, idx) => {
+                      const isCorrect = showAnswers && idx === q.correctAnswer
+                      return (
+                        <div key={idx} className={`option preview-option${isCorrect ? ' option-correct' : ''}`}>
+                          <span>{String.fromCharCode(65 + idx)}.</span>
+                          <span className="question-text">{opt}</span>
+                          {isCorrect && <strong> ✓ To'g'ri javob</strong>}
+                        </div>
+                      )
+                    })}
+                  </div>
+                ) : (
+                  <>
+                    <p className="muted">Ochiq savol (admin baholaydi)</p>
+                    {showAnswers && q.correctAnswer && (
+                      <p className="question-text">
+                        <strong>Namunaviy javob:</strong> {q.correctAnswer}
+                      </p>
+                    )}
+                  </>
+                )}
+              </div>
+            )
+          })}
         </>
       )}
     </div>

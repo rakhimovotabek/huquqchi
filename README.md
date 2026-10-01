@@ -119,7 +119,7 @@ Chop etilgan manzilni (odatda `http://localhost:5173`) oching va administrator s
 
 **Yangi imkoniyatlar (hammasi ixtiyoriy):**
 - **Testlar ro'yxatida qidiruv** va **bir nechta testni belgilab** birdaniga "Ruxsat berish" / "Bir martalik" / "Yopish".
-- **Statistika** tugmasi — testni topshirishlar soni, o'rtacha va eng yuqori natija, eng ko'p xato qilingan savollar va eng yaxshi 10 talaba.
+- **Test nomini bosing** — statistika va undan keyin barcha savollar (to'g'ri javoblar bilan) ochiladi: topshirishlar soni, o'rtacha va eng yuqori natija, eng ko'p xato qilingan savollar va eng yaxshi 10 talaba.
 - **Qo'shimcha sozlamalar** (testni tahrirlash sahifasida): savol va variantlarni har bir talaba uchun **aralashtirish**; talabalarga **reytingni ko'rsatish**; testning **ochilish va yopilish vaqti**. Vaqt qo'yilsa, test faqat shu oraliqda boshlanadi (boshlab qo'ygan talaba tugatishda davom etadi).
 - **Talabalar bo'limida** talabalarni belgilab, testni tanlang va **"Testga ruxsat berish"** bosing: test faqat shu talabalarga ko'rinadi (holati "Tanlanganlarga"). "Ruxsatni olib tashlash" ham bor.
 - **Talaba uchun:** oxirgi 5 daqiqada taymer qizarib ogohlantiradi; topshirishdan oldin javob berilmagan va belgilangan savollar ko'rsatiladi; savolni "qayta ko'rish uchun belgilash" mumkin (savollar oynasida sariq belgi); javoblar shu qurilmada vaqtincha saqlanadi, sahifa yangilansa yo'qolmaydi.

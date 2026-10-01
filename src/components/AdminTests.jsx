@@ -2,7 +2,6 @@ import { useEffect, useMemo, useState } from 'react'
 import { supabase } from '../lib/supabase'
 import { fetchAll } from '../lib/paged'
 import { formatDate } from '../lib/format'
-import AdminTestPreview from './AdminTestPreview'
 import AdminTestEdit from './AdminTestEdit'
 import AdminTestStats from './AdminTestStats'
 import { TrashIcon, PencilIcon } from './Icons'
@@ -41,7 +40,6 @@ export default function AdminTests() {
   const [json, setJson] = useState('')
   const [error, setError] = useState('')
   const [notice, setNotice] = useState('')
-  const [previewTest, setPreviewTest] = useState(null)
   const [editTest, setEditTest] = useState(null)
   const [statsTest, setStatsTest] = useState(null)
   const [loading, setLoading] = useState(false)
@@ -206,10 +204,6 @@ export default function AdminTests() {
     )
   }
 
-  if (previewTest) {
-    return <AdminTestPreview test={previewTest} onBack={() => setPreviewTest(null)} />
-  }
-
   if (statsTest) {
     return <AdminTestStats test={statsTest} onBack={() => setStatsTest(null)} />
   }
@@ -336,7 +330,9 @@ export default function AdminTests() {
                           <PencilIcon />
                         </button>
                         <div>
-                          <div className="test-title">{t.title}</div>
+                          <button className="link-btn test-title" title="Statistika va savollarni ochish" onClick={() => setStatsTest(t)}>
+                            {t.title}
+                          </button>
                           {(t.opens_at || t.closes_at || t.shuffle || t.show_leaderboard) && (
                             <div className="chips">
                               {(t.opens_at || t.closes_at) && (
@@ -361,12 +357,6 @@ export default function AdminTests() {
                     </td>
                     <td>
                       <div className="action-cell">
-                        <button className="secondary-btn" onClick={() => setPreviewTest(t)}>
-                          Ko'rish
-                        </button>
-                        <button className="secondary-btn" onClick={() => setStatsTest(t)}>
-                          Statistika
-                        </button>
                         {t.access !== 'allowed' && (
                           <button className="btn-green" onClick={() => setAccess([t.id], 'allowed')}>
                             Ruxsat berish

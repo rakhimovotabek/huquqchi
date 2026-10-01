@@ -1249,3 +1249,25 @@ button:disabled {
     min-height: 44px;
   }
 }
+
+/* ---------- Test sahifasi: savollar ro'yxati ---------- */
+.question-view {
+  margin-bottom: 12px;
+}
+
+.q-view-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 6px;
+}
+
+.test-title.link-btn {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.test-title.link-btn:hover {
+  color: var(--accent);
+}
