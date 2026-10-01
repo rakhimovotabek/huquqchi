@@ -498,3 +498,106 @@ select {
   background: #e9f7ef;
   border-color: #22c55e;
 }
+
+/* ---------- Admin paneli: kengroq maket va tugma ranglari ---------- */
+.content-wide {
+  max-width: 1400px;
+  padding: 20px 28px;
+}
+
+.table-scroll {
+  width: 100%;
+  overflow-x: auto;
+}
+
+.tests-table td:first-child {
+  width: 38%;
+  font-weight: 500;
+}
+
+.action-cell.nowrap {
+  flex-wrap: nowrap;
+  align-items: center;
+}
+
+.btn-green {
+  background: #16a34a;
+  border-color: #15803d;
+  color: #fff;
+}
+
+.btn-green:hover {
+  background: #15803d;
+}
+
+.btn-red {
+  background: #dc2626;
+  border-color: #b91c1c;
+  color: #fff;
+}
+
+.btn-red:hover {
+  background: #b91c1c;
+}
+
+.btn-amber {
+  background: #fff4d6;
+  border-color: #e0b64a;
+  color: #8a5a00;
+}
+
+.btn-amber:hover {
+  background: #fde9a8;
+}
+
+.icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 6px 8px;
+  background: #fff;
+  color: #b91c1c;
+  border-color: #e5b4b4;
+}
+
+.icon-btn:hover {
+  background: #dc2626;
+  border-color: #dc2626;
+  color: #fff;
+}
+
+/* ---------- Test import / tahrirlash ---------- */
+.import-row {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 12px;
+}
+
+@media (max-width: 600px) {
+  .import-row {
+    grid-template-columns: 1fr;
+  }
+}
+
+.name-cell {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.icon-btn.neutral {
+  color: #1a1a1a;
+  border-color: #ccc;
+}
+
+.icon-btn.neutral:hover {
+  background: #1a1a1a;
+  border-color: #1a1a1a;
+  color: #fff;
+}
+
+.banner-warn {
+  background: #fff4d6;
+  border-color: #e0b64a;
+  color: #6b4500;
+}

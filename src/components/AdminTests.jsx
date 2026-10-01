@@ -1,52 +1,19 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '../lib/supabase'
 import AdminTestPreview from './AdminTestPreview'
-
-// Ikkala nomlanishni ham qabul qiladi: testTitle/durationMinutes va title/duration
-function readMeta(parsed) {
-  const title = parsed.testTitle ?? parsed.title ?? ''
-  const duration = Number(parsed.durationMinutes ?? parsed.duration)
-  return { title: String(title || '').trim(), duration }
-}
-
-function validateTestJson(parsed) {
-  if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) throw new Error("JSON obyekt bo'lishi kerak")
-  if (!Array.isArray(parsed.questions) || parsed.questions.length === 0) {
-    throw new Error('"questions" bo\'sh bo\'lmagan massiv bo\'lishi kerak')
-  }
-  const { duration } = readMeta(parsed)
-  if (!duration || duration <= 0) throw new Error('"durationMinutes" musbat son bo\'lishi kerak')
-
-  parsed.questions.forEach((q, i) => {
-    if (!q.question || typeof q.question !== 'string') {
-      throw new Error(`${i + 1}-savol: "question" matni yo'q`)
-    }
-    if (q.type === 'mcq') {
-      if (!Array.isArray(q.options) || q.options.length < 2) {
-        throw new Error(`${i + 1}-savol: test savoli uchun kamida 2 ta "options" kerak`)
-      }
-      if (!Number.isInteger(q.correctAnswer) || q.correctAnswer < 0 || q.correctAnswer >= q.options.length) {
-        throw new Error(`${i + 1}-savol: "correctAnswer" to'g'ri variant indeksi bo'lishi kerak (0 dan boshlanadi)`)
-      }
-    } else if (q.type === 'open') {
-      if (q.correctAnswer !== undefined && q.correctAnswer !== null && typeof q.correctAnswer !== 'string') {
-        throw new Error(`${i + 1}-savol: ochiq savolda "correctAnswer" matn bo'lishi kerak`)
-      }
-    } else {
-      throw new Error(`${i + 1}-savol: "type" faqat "mcq" yoki "open" bo'lishi mumkin`)
-    }
-  })
-
-  return duration
-}
+import AdminTestEdit from './AdminTestEdit'
+import { TrashIcon, PencilIcon } from './Icons'
+import { extractQuestions, parseDuration, readMeta, validateQuestions } from '../lib/testJson'
 
 export default function AdminTests() {
   const [tests, setTests] = useState([])
   const [title, setTitle] = useState('')
+  const [durationInput, setDurationInput] = useState('')
   const [json, setJson] = useState('')
   const [error, setError] = useState('')
   const [notice, setNotice] = useState('')
   const [previewTest, setPreviewTest] = useState(null)
+  const [editTest, setEditTest] = useState(null)
   const [loading, setLoading] = useState(false)
   const [listLoading, setListLoading] = useState(true)
 
@@ -73,24 +40,42 @@ export default function AdminTests() {
       setError("JSON noto'g'ri: " + err.message)
       return
     }
-    let duration
+    const questions = extractQuestions(parsed)
     try {
-      duration = validateTestJson(parsed)
+      validateQuestions(questions)
     } catch (err) {
       setError("Test formati noto'g'ri: " + err.message)
       return
     }
-    // Nom maydoni bo'sh bo'lsa, JSON ichidagi nom ishlatiladi
-    const finalTitle = title.trim() || readMeta(parsed).title
+    const meta = readMeta(parsed)
+
+    // Nom: maydon bo'sh bo'lsa, JSON ichidagi nom ishlatiladi
+    const finalTitle = title.trim() || meta.title
     if (!finalTitle) {
       setError('Test nomini kiriting')
       return
+    }
+
+    // Davomiylik: maydon bo'sh bo'lsa, JSON ichidagi vaqt ishlatiladi
+    let duration
+    if (durationInput.trim() !== '') {
+      duration = parseDuration(durationInput)
+      if (!duration) {
+        setError("Davomiylik musbat butun son (daqiqa) bo'lishi kerak")
+        return
+      }
+    } else {
+      duration = parseDuration(meta.duration)
+      if (!duration) {
+        setError("Davomiylikni kiriting yoki JSON ichida \"durationMinutes\" yozing")
+        return
+      }
     }
     setLoading(true)
     const { error } = await supabase.from('tests').insert({
       title: finalTitle,
       duration_minutes: duration,
-      questions_json: parsed.questions,
+      questions_json: questions,
       access: 'locked'
     })
     setLoading(false)
@@ -98,6 +83,7 @@ export default function AdminTests() {
       setError('Testni import qilishda xatolik: ' + error.message)
     } else {
       setTitle('')
+      setDurationInput('')
       setJson('')
       setNotice("Test import qilindi. U hozircha yopiq — talabalarga ko'rsatish uchun \"Ruxsat berish\" tugmasini bosing.")
       loadTests()
@@ -124,6 +110,20 @@ export default function AdminTests() {
     else loadTests()
   }
 
+  if (editTest) {
+    return (
+      <AdminTestEdit
+        test={editTest}
+        onBack={() => setEditTest(null)}
+        onSaved={() => {
+          setEditTest(null)
+          setNotice("Test o'zgartirildi.")
+          loadTests()
+        }}
+      />
+    )
+  }
+
   if (previewTest) {
     return <AdminTestPreview test={previewTest} onBack={() => setPreviewTest(null)} />
   }
@@ -134,8 +134,22 @@ export default function AdminTests() {
       {error && <div className="error">{error}</div>}
       {notice && <div className="success">{notice}</div>}
       <form className="stack-form" onSubmit={handleImport}>
-        <label>Test nomi (bo'sh qoldirsangiz, JSON ichidagi nom olinadi)</label>
-        <input value={title} onChange={(e) => setTitle(e.target.value)} />
+        <div className="import-row">
+          <div>
+            <label>Test nomi (bo'sh qoldirsangiz, JSON ichidagi nom olinadi)</label>
+            <input value={title} onChange={(e) => setTitle(e.target.value)} />
+          </div>
+          <div>
+            <label>Davomiyligi, daqiqa (bo'sh qoldirsangiz, JSON ichidagi vaqt olinadi)</label>
+            <input
+              type="number"
+              min="1"
+              value={durationInput}
+              onChange={(e) => setDurationInput(e.target.value)}
+              placeholder="masalan, 90"
+            />
+          </div>
+        </div>
         <label>Test JSON</label>
         <textarea
           rows={12}
@@ -152,7 +166,8 @@ export default function AdminTests() {
       {listLoading ? (
         <p>Yuklanmoqda...</p>
       ) : (
-        <table className="simple-table">
+        <div className="table-scroll">
+        <table className="simple-table tests-table">
           <thead>
             <tr>
               <th>Nomi</th>
@@ -165,29 +180,52 @@ export default function AdminTests() {
           <tbody>
             {tests.map((t) => (
               <tr key={t.id}>
-                <td>{t.title}</td>
+                <td>
+                  <div className="name-cell">
+                    <button
+                      className="icon-btn neutral"
+                      title="Tahrirlash"
+                      aria-label="Tahrirlash"
+                      onClick={() => setEditTest(t)}
+                    >
+                      <PencilIcon />
+                    </button>
+                    <span>{t.title}</span>
+                  </div>
+                </td>
                 <td>{t.duration_minutes} daqiqa</td>
                 <td>{t.questions_json.length}</td>
                 <td>
                   <span className={`badge badge-${t.access}`}>{accessLabel[t.access] || t.access}</span>
                 </td>
                 <td>
-                  <div className="action-cell">
+                  <div className="action-cell nowrap">
                     <button className="secondary-btn" onClick={() => setPreviewTest(t)}>
                       Ko'rish
                     </button>
-                    {t.access !== 'allowed' && <button onClick={() => setAccess(t.id, 'allowed')}>Ruxsat berish</button>}
+                    {t.access !== 'allowed' && (
+                      <button className="btn-green" onClick={() => setAccess(t.id, 'allowed')}>
+                        Ruxsat berish
+                      </button>
+                    )}
                     {t.access !== 'one_time' && (
-                      <button className="secondary-btn" onClick={() => setAccess(t.id, 'one_time')}>
+                      <button className="btn-amber" onClick={() => setAccess(t.id, 'one_time')}>
                         Bir martalik
                       </button>
                     )}
                     {t.access !== 'locked' && (
-                      <button className="secondary-btn" onClick={() => setAccess(t.id, 'locked')}>
+                      <button className="btn-red" onClick={() => setAccess(t.id, 'locked')}>
                         Yopish
                       </button>
                     )}
-                    <button onClick={() => handleDelete(t.id, t.title)}>O'chirish</button>
+                    <button
+                      className="icon-btn"
+                      title="O'chirish"
+                      aria-label="O'chirish"
+                      onClick={() => handleDelete(t.id, t.title)}
+                    >
+                      <TrashIcon />
+                    </button>
                   </div>
                 </td>
               </tr>
@@ -199,6 +237,7 @@ export default function AdminTests() {
             )}
           </tbody>
         </table>
+        </div>
       )}
     </div>
   )

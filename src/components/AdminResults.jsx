@@ -6,6 +6,7 @@ import ReviewResult from './ReviewResult'
 
 export default function AdminResults() {
   const [attempts, setAttempts] = useState([])
+  const [allTests, setAllTests] = useState([])
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(true)
   // { id, mode: 'grade' | 'view', studentName }
@@ -31,6 +32,10 @@ export default function AdminResults() {
       .order('created_at', { ascending: false })
     if (error) setError('Natijalarni yuklashda xatolik: ' + error.message)
     else setAttempts(data)
+
+    // Filtr uchun barcha testlar (yopiq va bir martalik testlar ham)
+    const { data: testRows } = await supabase.from('tests').select('id, title, access')
+    if (testRows) setAllTests(testRows)
     setLoading(false)
   }
 
@@ -48,10 +53,12 @@ export default function AdminResults() {
     )
   }
 
-  // Filtr uchun testlar ro'yxati (faqat natijasi bor testlar)
-  const testOptions = Array.from(
-    new Map(attempts.filter((a) => a.test_id).map((a) => [a.test_id, a.tests?.title || "Noma'lum test"])).entries()
-  ).sort((x, y) => String(x[1]).localeCompare(String(y[1])))
+  // Filtr uchun testlar ro'yxati (barcha testlar)
+  const accessText = { locked: 'Yopiq', allowed: 'Ruxsat berilgan', one_time: 'Bir martalik' }
+  const optionMap = new Map()
+  attempts.filter((a) => a.test_id).forEach((a) => optionMap.set(a.test_id, a.tests?.title || "Noma'lum test"))
+  allTests.forEach((t) => optionMap.set(t.id, `${t.title} (${accessText[t.access] || t.access})`))
+  const testOptions = Array.from(optionMap.entries()).sort((x, y) => String(x[1]).localeCompare(String(y[1])))
 
   const fromDate = fFrom ? new Date(fFrom + 'T00:00:00') : null
   const toDate = fTo ? new Date(fTo + 'T23:59:59.999') : null

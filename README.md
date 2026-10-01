@@ -104,13 +104,15 @@ Chop etilgan manzilni (odatda `http://localhost:5173`) oching va administrator s
 
 **Administrator:**
 - **Talabalar** — foydalanuvchi nomi va parol kiriting, "Talabani saqlash" bosing. Talabaning nomi yoki **"Profil"** tugmasini bosing: butun vaqt bo'yicha umumiy foiz, yakunlangan testlar soni, barcha urinishlar va natijalar (har biri uchun "Ko'rish" / "Baholash") ko'rinadi. Profilda **"Parolni ko'rish"** tugmasi talaba parolini ko'rsatadi, **"Parolni o'zgartirish"** esa yangi parol o'rnatadi. Parollar saqlanishi qo'shilishidan oldin yaratilgan talabalar uchun parol ko'rinmaydi: yangi parol o'rnatsangiz, keyin uni ko'ra olasiz.
-- **Testlar** — test JSON'ini joylang va "Testni import qilish" bosing. "Test nomi" maydoni bo'sh bo'lsa, JSON ichidagi `testTitle` olinadi.
+- **Testlar** — test JSON'ini joylang va "Testni import qilish" bosing. "Test nomi" va "Davomiyligi (daqiqa)" maydonlari bo'sh bo'lsa, JSON ichidagi `testTitle` va `durationMinutes` olinadi; to'ldirilsa, maydondagi qiymat ustun turadi.
+  - **Qalam belgisi (test nomi oldida)** — testni tahrirlash: nom, davomiylik va savollar (JSON). Testni allaqachon topshirgan talabalar bo'lsa, ogohlantirish chiqadi.
+  - **Axlat qutisi belgisi** — testni o'chirish (tasdiqlash so'raladi).
   - **Import qilingan test avval "Yopiq" bo'ladi** va talabalarga ko'rinmaydi.
   - **Ruxsat berish** — test barcha talabalarga ko'rinadi va istagancha marta topshirish mumkin.
   - **Bir martalik** — test barcha talabalarga ko'rinadi, lekin har bir talaba uni topshirgach, bu test uning ro'yxatidan yo'qoladi (natijasi "Natijalar" bo'limida qoladi).
   - **Ko'rish** — testni talaba hisobisiz ko'rib chiqish: barcha savollar, variantlar va to'g'ri javoblar. Hech narsa yechilmaydi va saqlanmaydi. "Javoblarni yashirish" tugmasi testni talaba ko'radigan ko'rinishda ko'rsatadi; chap / o'ng strelka va "Barcha savollar" ham ishlaydi.
   - **Yopish** — testni yana talabalardan yashiradi. Testni allaqachon topshirgan talabalar o'z natijalarini ko'rishda davom etadi.
-- **Natijalar** — barcha topshirilgan urinishlar. **"Filtr"** tugmasi orqali test bo'yicha, talaba nomi bo'yicha va sana oralig'i bo'yicha saralash mumkin. Istalgan urinish uchun **"Ko'rish"** tugmasi talabaning barcha javoblarini savolma-savol ko'rsatadi (to'g'ri javob, talaba javobi, natija). Savollar orasida **chap / o'ng strelka** tugmalari bilan yurish mumkin. "Tekshiruvni kutmoqda" holatidagi urinish uchun "Baholash" tugmasini bosing va har bir ochiq javobni "To'g'ri" yoki "Noto'g'ri" deb belgilang. Barcha javoblar baholangach, yakuniy ball avtomatik hisoblanadi.
+- **Natijalar** — barcha topshirilgan urinishlar. **"Filtr"** tugmasi orqali test bo'yicha (ro'yxatda yopiq va bir martalik testlar ham bor), talaba nomi bo'yicha va sana oralig'i bo'yicha saralash mumkin. Istalgan urinish uchun **"Ko'rish"** tugmasi talabaning barcha javoblarini savolma-savol ko'rsatadi (to'g'ri javob, talaba javobi, natija). Savollar orasida **chap / o'ng strelka** tugmalari bilan yurish mumkin. "Tekshiruvni kutmoqda" holatidagi urinish uchun "Baholash" tugmasini bosing va har bir ochiq javobni "To'g'ri" yoki "Noto'g'ri" deb belgilang. Barcha javoblar baholangach, yakuniy ball avtomatik hisoblanadi.
 - **Bo'sh qoldirilgan ochiq javoblar** adminga ko'rsatilmaydi — ular avtomatik "noto'g'ri" hisoblanadi.
 
 **Test JSON formati:**

@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { supabase } from '../lib/supabase'
 import { createStudentAccount } from '../lib/students'
 import AdminStudentProfile from './AdminStudentProfile'
+import { TrashIcon } from './Icons'
 
 export default function AdminStudents() {
   const [students, setStudents] = useState([])
@@ -84,7 +85,14 @@ export default function AdminStudents() {
                     <button className="secondary-btn" onClick={() => setOpenStudent(s)}>
                       Profil
                     </button>
-                    <button onClick={() => handleDelete(s.id, s.username)}>O'chirish</button>
+                    <button
+                      className="icon-btn"
+                      title="O'chirish"
+                      aria-label="O'chirish"
+                      onClick={() => handleDelete(s.id, s.username)}
+                    >
+                      <TrashIcon />
+                    </button>
                   </div>
                 </td>
               </tr>
