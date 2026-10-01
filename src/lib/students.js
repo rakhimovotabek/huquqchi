@@ -24,3 +24,24 @@ export async function createStudentAccount(username, password) {
 
   return data.id
 }
+
+// Administrator talabaga yangi parol o'rnatadi (set-student-password Edge Function).
+export async function setStudentPassword(studentId, password) {
+  const { data, error } = await supabase.functions.invoke('set-student-password', {
+    body: { studentId, password }
+  })
+
+  if (error) {
+    let message = error.message
+    try {
+      const body = await error.context.json()
+      if (body?.error) message = body.error
+    } catch (_) {
+      // javob JSON emas
+    }
+    throw new Error(message)
+  }
+
+  if (data?.error) throw new Error(data.error)
+  return true
+}

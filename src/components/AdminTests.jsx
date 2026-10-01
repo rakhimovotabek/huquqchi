@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '../lib/supabase'
+import AdminTestPreview from './AdminTestPreview'
 
 // Ikkala nomlanishni ham qabul qiladi: testTitle/durationMinutes va title/duration
 function readMeta(parsed) {
@@ -45,6 +46,7 @@ export default function AdminTests() {
   const [json, setJson] = useState('')
   const [error, setError] = useState('')
   const [notice, setNotice] = useState('')
+  const [previewTest, setPreviewTest] = useState(null)
   const [loading, setLoading] = useState(false)
   const [listLoading, setListLoading] = useState(true)
 
@@ -122,6 +124,10 @@ export default function AdminTests() {
     else loadTests()
   }
 
+  if (previewTest) {
+    return <AdminTestPreview test={previewTest} onBack={() => setPreviewTest(null)} />
+  }
+
   return (
     <div>
       <h2>Testlar</h2>
@@ -167,6 +173,9 @@ export default function AdminTests() {
                 </td>
                 <td>
                   <div className="action-cell">
+                    <button className="secondary-btn" onClick={() => setPreviewTest(t)}>
+                      Ko'rish
+                    </button>
                     {t.access !== 'allowed' && <button onClick={() => setAccess(t.id, 'allowed')}>Ruxsat berish</button>}
                     {t.access !== 'one_time' && (
                       <button className="secondary-btn" onClick={() => setAccess(t.id, 'one_time')}>

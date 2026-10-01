@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '../lib/supabase'
 import { createStudentAccount } from '../lib/students'
+import AdminStudentProfile from './AdminStudentProfile'
 
 export default function AdminStudents() {
   const [students, setStudents] = useState([])
@@ -9,6 +10,7 @@ export default function AdminStudents() {
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
   const [listLoading, setListLoading] = useState(true)
+  const [openStudent, setOpenStudent] = useState(null)
 
   useEffect(() => {
     loadStudents()
@@ -44,6 +46,10 @@ export default function AdminStudents() {
     else loadStudents()
   }
 
+  if (openStudent) {
+    return <AdminStudentProfile student={openStudent} onBack={() => setOpenStudent(null)} />
+  }
+
   return (
     <div>
       <h2>Talabalar</h2>
@@ -68,9 +74,18 @@ export default function AdminStudents() {
           <tbody>
             {students.map((s) => (
               <tr key={s.id}>
-                <td>{s.username}</td>
                 <td>
-                  <button onClick={() => handleDelete(s.id, s.username)}>O'chirish</button>
+                  <button className="link-btn" onClick={() => setOpenStudent(s)}>
+                    {s.username}
+                  </button>
+                </td>
+                <td>
+                  <div className="action-cell">
+                    <button className="secondary-btn" onClick={() => setOpenStudent(s)}>
+                      Profil
+                    </button>
+                    <button onClick={() => handleDelete(s.id, s.username)}>O'chirish</button>
+                  </div>
                 </td>
               </tr>
             ))}

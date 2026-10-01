@@ -32,6 +32,8 @@ https://nodejs.org saytidan Node.js 18 yoki undan yangi versiyasini o'rnating.
 
 > **Xatolik: "Could not find the 'access' column" yoki "column tests.access does not exist"?** Demak, baza hali yangilanmagan. `supabase/migration_access.sql` faylini SQL Editor'da to'liq ishga tushiring (bir marta Run). U ustunni qo'shadi, mavjud testlarni "Ruxsat berilgan" qiladi va API keshini yangilaydi.
 
+> **Talaba parollarini ko'rish uchun** (admin → Talabalar → talaba profili) `supabase/migration_student_passwords.sql` faylini ham SQL Editor'da bir marta ishga tushiring. Parollar oddiy matn ko'rinishida saqlanadi va faqat administrator o'qiy oladi.
+
 > **Eski baza uchun (yangilash):** agar ilovani avval ishlatgan bo'lsangiz, shu `schema.sql` faylini yana bir marta to'liq ishga tushiring. Fayl qayta ishga tushirilganda ma'lumotlarni o'chirmaydi: testlar jadvaliga `access` (kirish huquqi) ustunini qo'shadi va yangi qoidalarni o'rnatadi. **Mavjud testlar avtomatik "Ruxsat berilgan" holatda qoladi**, ya'ni talabalarga ko'rinishda davom etadi.
 
 ---
@@ -80,6 +82,7 @@ Talabalar `create-student` Edge Function orqali yaratiladi. Uni Supabase'ga yukl
 npx supabase login
 npx supabase link --project-ref SIZNING-PROJECT-REF
 npx supabase functions deploy create-student
+npx supabase functions deploy set-student-password
 ```
 
 Funksiya kodini o'zgartirsangiz (masalan, xabarlar tarjimasi), shu buyruq bilan qayta yuklash kerak.
@@ -100,13 +103,14 @@ Chop etilgan manzilni (odatda `http://localhost:5173`) oching va administrator s
 ## 8. Ilovadan foydalanish
 
 **Administrator:**
-- **Talabalar** — foydalanuvchi nomi va parol kiriting, "Talabani saqlash" bosing.
+- **Talabalar** — foydalanuvchi nomi va parol kiriting, "Talabani saqlash" bosing. Talabaning nomi yoki **"Profil"** tugmasini bosing: butun vaqt bo'yicha umumiy foiz, yakunlangan testlar soni, barcha urinishlar va natijalar (har biri uchun "Ko'rish" / "Baholash") ko'rinadi. Profilda **"Parolni ko'rish"** tugmasi talaba parolini ko'rsatadi, **"Parolni o'zgartirish"** esa yangi parol o'rnatadi. Parollar saqlanishi qo'shilishidan oldin yaratilgan talabalar uchun parol ko'rinmaydi: yangi parol o'rnatsangiz, keyin uni ko'ra olasiz.
 - **Testlar** — test JSON'ini joylang va "Testni import qilish" bosing. "Test nomi" maydoni bo'sh bo'lsa, JSON ichidagi `testTitle` olinadi.
   - **Import qilingan test avval "Yopiq" bo'ladi** va talabalarga ko'rinmaydi.
   - **Ruxsat berish** — test barcha talabalarga ko'rinadi va istagancha marta topshirish mumkin.
   - **Bir martalik** — test barcha talabalarga ko'rinadi, lekin har bir talaba uni topshirgach, bu test uning ro'yxatidan yo'qoladi (natijasi "Natijalar" bo'limida qoladi).
+  - **Ko'rish** — testni talaba hisobisiz ko'rib chiqish: barcha savollar, variantlar va to'g'ri javoblar. Hech narsa yechilmaydi va saqlanmaydi. "Javoblarni yashirish" tugmasi testni talaba ko'radigan ko'rinishda ko'rsatadi; chap / o'ng strelka va "Barcha savollar" ham ishlaydi.
   - **Yopish** — testni yana talabalardan yashiradi. Testni allaqachon topshirgan talabalar o'z natijalarini ko'rishda davom etadi.
-- **Natijalar** — barcha topshirilgan urinishlar. Istalgan urinish uchun **"Ko'rish"** tugmasi talabaning barcha javoblarini savolma-savol ko'rsatadi (to'g'ri javob, talaba javobi, natija). Savollar orasida **chap / o'ng strelka** tugmalari bilan yurish mumkin. "Tekshiruvni kutmoqda" holatidagi urinish uchun "Baholash" tugmasini bosing va har bir ochiq javobni "To'g'ri" yoki "Noto'g'ri" deb belgilang. Barcha javoblar baholangach, yakuniy ball avtomatik hisoblanadi.
+- **Natijalar** — barcha topshirilgan urinishlar. **"Filtr"** tugmasi orqali test bo'yicha, talaba nomi bo'yicha va sana oralig'i bo'yicha saralash mumkin. Istalgan urinish uchun **"Ko'rish"** tugmasi talabaning barcha javoblarini savolma-savol ko'rsatadi (to'g'ri javob, talaba javobi, natija). Savollar orasida **chap / o'ng strelka** tugmalari bilan yurish mumkin. "Tekshiruvni kutmoqda" holatidagi urinish uchun "Baholash" tugmasini bosing va har bir ochiq javobni "To'g'ri" yoki "Noto'g'ri" deb belgilang. Barcha javoblar baholangach, yakuniy ball avtomatik hisoblanadi.
 - **Bo'sh qoldirilgan ochiq javoblar** adminga ko'rsatilmaydi — ular avtomatik "noto'g'ri" hisoblanadi.
 
 **Test JSON formati:**
@@ -163,7 +167,7 @@ src/
 
 supabase/
   schema.sql    To'liq sxema va RLS qoidalari
-  functions/    create-student Edge Function
+  functions/    create-student va set-student-password Edge Function'lari
 ```
 
 Ilova nomi (`Yangiariq Yuridik Senter`) `src/lib/brand.js` va `index.html` da saqlanadi.

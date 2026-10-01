@@ -2,7 +2,7 @@ import { useEffect } from 'react'
 
 // Barcha savollar oynasi.
 // statusOf(i) qaytaradi: 'answered' | 'unanswered' | 'correct' | 'incorrect' | 'pending'
-// mode: 'test' (yashil / oq) yoki 'review' (yashil / qizil / oq)
+// mode: 'test' (yashil / oq), 'review' (yashil / qizil / oq) yoki 'preview' (admin ko'rib chiqishi, rangsiz)
 export default function QuestionNavigator({ total, current, mode, statusOf, onSelect, onClose }) {
   useEffect(() => {
     function onKeyDown(e) {
@@ -45,7 +45,7 @@ export default function QuestionNavigator({ total, current, mode, statusOf, onSe
           ))}
         </div>
         <div className="q-legend">
-          {mode === 'test' ? (
+          {mode === 'preview' ? null : mode === 'test' ? (
             <>
               <span>
                 <i className="dot q-answered" /> Javob berilgan

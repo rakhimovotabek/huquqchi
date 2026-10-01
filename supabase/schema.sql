@@ -72,6 +72,13 @@ begin
   end if;
 end $$;
 
+-- Talaba parollari (faqat administrator o'qiy oladi; yozish Edge Function orqali)
+create table if not exists student_passwords (
+  student_id uuid primary key references profiles(id) on delete cascade,
+  password text not null,
+  updated_at timestamptz not null default now()
+);
+
 -- ------------------------------------------------------------
 -- Helper function: is the current user an admin?
 -- security definer + owned by the table owner lets this bypass RLS
@@ -131,6 +138,7 @@ alter table profiles enable row level security;
 alter table tests enable row level security;
 alter table attempts enable row level security;
 alter table answers enable row level security;
+alter table student_passwords enable row level security;
 
 -- Profiles: a user can read their own profile; admins can read/insert/delete any.
 drop policy if exists "profiles_select_own" on profiles;
@@ -148,6 +156,11 @@ create policy "profiles_insert_admin" on profiles
 drop policy if exists "profiles_delete_admin" on profiles;
 create policy "profiles_delete_admin" on profiles
   for delete using (public.is_admin());
+
+-- Student passwords: only admins can read (writes happen via Edge Functions only).
+drop policy if exists "student_passwords_select_admin" on student_passwords;
+create policy "student_passwords_select_admin" on student_passwords
+  for select using (public.is_admin());
 
 -- Tests: admins see all; students see only allowed / one-time tests
 -- (plus tests they have already attempted, so their past results still open).
