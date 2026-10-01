@@ -16,3 +16,13 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey)
 export function usernameToEmail(username) {
   return `${username.trim().toLowerCase()}@testplatform-users.com`
 }
+
+// Eski parolni tekshirish uchun alohida (sessiyani saqlamaydigan) klient.
+// Asosiy sessiyaga ta'sir qilmaydi.
+export async function verifyPassword(username, password) {
+  const temp = createClient(supabaseUrl, supabaseAnonKey, {
+    auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false }
+  })
+  const { error } = await temp.auth.signInWithPassword({ email: usernameToEmail(username), password })
+  return !error
+}

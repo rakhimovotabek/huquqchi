@@ -3,6 +3,7 @@ import { supabase } from '../lib/supabase'
 import { isBlank } from '../lib/format'
 import { useArrowKeys } from '../lib/useArrowKeys'
 import QuestionNavigator from './QuestionNavigator'
+import PracticeMistakes from './PracticeMistakes'
 
 // Talaba o'z natijasini, admin esa istalgan talabaning natijasini ko'rib chiqishi uchun ishlatiladi.
 export default function ReviewResult({ attemptId, onBack, studentName }) {
@@ -10,6 +11,7 @@ export default function ReviewResult({ attemptId, onBack, studentName }) {
   const [answers, setAnswers] = useState([])
   const [current, setCurrent] = useState(0)
   const [showNav, setShowNav] = useState(false)
+  const [practice, setPractice] = useState(false)
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(true)
 
@@ -69,6 +71,15 @@ export default function ReviewResult({ attemptId, onBack, studentName }) {
   if (error) return <div className="error">{error}</div>
   if (!test) return null
 
+  // Xato yoki javobsiz qolgan savollar (faqat talaba o'zi uchun mashq)
+  const wrongIdx = studentName
+    ? []
+    : test.questions_json.map((_, i) => i).filter((i) => ['incorrect', 'unanswered'].includes(statusOf(i)))
+
+  if (practice) {
+    return <PracticeMistakes questions={test.questions_json} wrongIdx={wrongIdx} onBack={() => setPractice(false)} />
+  }
+
   const q = test.questions_json[current]
   const a = answers.find((x) => x.question_index === current)
   const studentAnswer = a?.answer
@@ -92,6 +103,15 @@ export default function ReviewResult({ attemptId, onBack, studentName }) {
         <p>
           <strong>Talaba:</strong> {studentName}
         </p>
+      )}
+      {wrongIdx.length > 0 && (
+        <div className="banner dismissible">
+          <span>
+            {wrongIdx.length} ta savolda xato qildingiz. Faqat shularni qayta ishlab ko'rishingiz mumkin (rasmiy natija
+            o'zgarmaydi).
+          </span>
+          <button onClick={() => setPractice(true)}>Xatolarni qayta ishlash</button>
+        </div>
       )}
       <div className="test-header">
         <p>

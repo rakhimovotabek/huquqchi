@@ -23,8 +23,10 @@ export default function App() {
       }
     })
 
-    const { data: listener } = supabase.auth.onAuthStateChange((_event, newSession) => {
+    const { data: listener } = supabase.auth.onAuthStateChange((event, newSession) => {
       setSession(newSession)
+      // Parol o'zgargani yoki token yangilangani sahifani qayta yuklamasligi kerak
+      if (newSession && (event === 'TOKEN_REFRESHED' || event === 'USER_UPDATED')) return
       if (newSession) {
         loadProfile(newSession.user.id)
       } else {

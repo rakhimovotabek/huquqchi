@@ -26,7 +26,7 @@ export default function AdminPanel({ profile, onLogout }) {
           Natijalar
         </button>
       </nav>
-      <main className="content">
+      <main className="content content-wide">
         {tab === 'students' && <AdminStudents />}
         {tab === 'tests' && <AdminTests />}
         {tab === 'results' && <AdminResults />}

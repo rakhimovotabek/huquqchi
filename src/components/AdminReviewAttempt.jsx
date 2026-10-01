@@ -19,7 +19,7 @@ export default function AdminReviewAttempt({ attemptId, onBack }) {
     if (currentAttempt.status === 'completed') return currentAttempt
     if (!currentAnswers.every((a) => a.reviewed)) return currentAttempt
     const score = currentAnswers.filter((a) => a.is_correct).length
-    const { error: updErr } = await supabase.from('attempts').update({ score, status: 'completed' }).eq('id', attemptId)
+    const { error: updErr } = await supabase.from('attempts').update({ score, status: 'completed', result_seen: false }).eq('id', attemptId)
     if (updErr) {
       setError('Yakuniy ballni saqlashda xatolik: ' + updErr.message)
       return currentAttempt

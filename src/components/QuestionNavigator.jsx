@@ -2,8 +2,8 @@ import { useEffect } from 'react'
 
 // Barcha savollar oynasi.
 // statusOf(i) qaytaradi: 'answered' | 'unanswered' | 'correct' | 'incorrect' | 'pending'
-// mode: 'test' (yashil / oq) yoki 'review' (yashil / qizil / oq)
-export default function QuestionNavigator({ total, current, mode, statusOf, onSelect, onClose }) {
+// mode: 'test' (yashil / oq), 'review' (yashil / qizil / oq) yoki 'preview' (admin ko'rib chiqishi, rangsiz)
+export default function QuestionNavigator({ total, current, mode, statusOf, flaggedOf, onSelect, onClose }) {
   useEffect(() => {
     function onKeyDown(e) {
       if (e.key === 'Escape') onClose()
@@ -12,7 +12,7 @@ export default function QuestionNavigator({ total, current, mode, statusOf, onSe
     return () => window.removeEventListener('keydown', onKeyDown)
   }, [onClose])
 
-  const items = Array.from({ length: total }, (_, i) => ({ i, status: statusOf(i) }))
+  const items = Array.from({ length: total }, (_, i) => ({ i, status: statusOf(i), flagged: flaggedOf ? flaggedOf(i) : false }))
   const hasPending = mode === 'review' && items.some((x) => x.status === 'pending')
 
   const statusLabel = {
@@ -33,11 +33,11 @@ export default function QuestionNavigator({ total, current, mode, statusOf, onSe
           </button>
         </div>
         <div className="q-grid">
-          {items.map(({ i, status }) => (
+          {items.map(({ i, status, flagged }) => (
             <button
               key={i}
-              className={`q-cell q-${status}${i === current ? ' q-current' : ''}`}
-              title={`${i + 1}-savol: ${statusLabel[status]}`}
+              className={`q-cell q-${status}${i === current ? ' q-current' : ''}${flagged ? ' q-flagged' : ''}`}
+              title={`${i + 1}-savol: ${statusLabel[status]}${flagged ? " (qayta ko'rish uchun belgilangan)" : ''}`}
               onClick={() => onSelect(i)}
             >
               {i + 1}
@@ -45,7 +45,7 @@ export default function QuestionNavigator({ total, current, mode, statusOf, onSe
           ))}
         </div>
         <div className="q-legend">
-          {mode === 'test' ? (
+          {mode === 'preview' ? null : mode === 'test' ? (
             <>
               <span>
                 <i className="dot q-answered" /> Javob berilgan
@@ -53,6 +53,11 @@ export default function QuestionNavigator({ total, current, mode, statusOf, onSe
               <span>
                 <i className="dot q-unanswered" /> Javob berilmagan
               </span>
+              {flaggedOf && (
+                <span>
+                  <i className="dot q-unanswered q-flagged" /> Belgilangan
+                </span>
+              )}
             </>
           ) : (
             <>

@@ -81,6 +81,13 @@ Deno.serve(async (req) => {
       return json({ error: insertErr.message }, 400)
     }
 
+    // Administrator keyinchalik ko'ra olishi uchun parolni saqlaymiz (faqat admin o'qiy oladi).
+    // Jadval hali yaratilmagan bo'lsa ham talaba yaratilaveradi.
+    const { error: pwErr } = await adminClient
+      .from('student_passwords')
+      .upsert({ student_id: created.user.id, password, updated_at: new Date().toISOString() })
+    if (pwErr) console.error('student_passwords saqlanmadi:', pwErr.message)
+
     return json({ success: true, id: created.user.id })
   } catch (err) {
     return json({ error: err.message || "Noma'lum xatolik" }, 500)
