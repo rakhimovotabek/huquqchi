@@ -137,6 +137,8 @@ export default function AdminResults() {
       {loading ? (
         <p>Yuklanmoqda...</p>
       ) : (
+        <div className="table-card">
+        <div className="table-scroll">
         <table className="simple-table">
           <thead>
             <tr>
@@ -180,6 +182,8 @@ export default function AdminResults() {
             )}
           </tbody>
         </table>
+        </div>
+        </div>
       )}
     </div>
   )

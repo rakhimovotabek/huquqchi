@@ -1,25 +1,39 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { supabase } from '../lib/supabase'
 import { isBlank } from '../lib/format'
+import { buildPlan } from '../lib/shuffle'
 import { useArrowKeys } from '../lib/useArrowKeys'
 import QuestionNavigator from './QuestionNavigator'
+import { FlagIcon } from './Icons'
 
 export default function TakeTest({ test, profile, onDone }) {
   const [attempt, setAttempt] = useState(null)
+  // Javoblar va belgilar ASL savol indeksi (qi) bo'yicha saqlanadi, aralashtirilgan bo'lsa ham
   const [answers, setAnswers] = useState({})
-  const [current, setCurrent] = useState(0)
+  const [flags, setFlags] = useState({})
+  const [current, setCurrent] = useState(0) // ko'rsatilayotgan o'rin (0 dan)
   const [remaining, setRemaining] = useState(null)
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(true)
   const [submitting, setSubmitting] = useState(false)
   const [showNav, setShowNav] = useState(false)
+  const [showSubmit, setShowSubmit] = useState(false)
+  const [warnDismissed, setWarnDismissed] = useState(false)
   const submittedRef = useRef(false)
+  const [draftLoaded, setDraftLoaded] = useState(false)
 
   const questions = test.questions_json
+  const draftKey = attempt ? `draft:${attempt.id}` : null
+
+  // Savollar tartibi (aralashtirish yoqilgan bo'lsa, har bir urinish uchun o'ziga xos, lekin barqaror)
+  const plan = useMemo(
+    () => (attempt ? buildPlan(questions, !!test.shuffle, attempt.id) : []),
+    [attempt, questions, test.shuffle]
+  )
 
   // Chap / o'ng strelka tugmalari bilan savollar orasida yurish
   useArrowKeys({
-    enabled: !showNav,
+    enabled: !showNav && !showSubmit,
     onLeft: () => setCurrent((c) => Math.max(0, c - 1)),
     onRight: () => setCurrent((c) => Math.min(questions.length - 1, c + 1))
   })
@@ -28,6 +42,33 @@ export default function TakeTest({ test, profile, onDone }) {
     initAttempt()
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
+
+  // Qoralama: javoblar telefon/brauzer yangilansa ham yo'qolmasligi uchun shu qurilmada saqlanadi
+  useEffect(() => {
+    if (!draftKey) return
+    try {
+      const raw = localStorage.getItem(draftKey)
+      if (raw) {
+        const d = JSON.parse(raw)
+        if (d.answers) setAnswers(d.answers)
+        if (d.flags) setFlags(d.flags)
+        if (Number.isInteger(d.current)) setCurrent(Math.min(d.current, questions.length - 1))
+      }
+    } catch (_) {
+      // qoralama o'qilmasa, e'tiborsiz qoldiramiz
+    }
+    setDraftLoaded(true)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [draftKey])
+
+  useEffect(() => {
+    if (!draftKey || !draftLoaded) return
+    try {
+      localStorage.setItem(draftKey, JSON.stringify({ answers, flags, current }))
+    } catch (_) {
+      // xotira to'la bo'lsa, e'tiborsiz qoldiramiz
+    }
+  }, [answers, flags, current, draftKey, draftLoaded])
 
   useEffect(() => {
     if (!attempt) return
@@ -91,8 +132,17 @@ export default function TakeTest({ test, profile, onDone }) {
     setLoading(false)
   }
 
-  function setAnswer(value) {
-    setAnswers((prev) => ({ ...prev, [current]: value }))
+  function setAnswer(qi, value) {
+    setAnswers((prev) => ({ ...prev, [qi]: value }))
+  }
+
+  function toggleFlag(qi) {
+    setFlags((prev) => {
+      const next = { ...prev }
+      if (next[qi]) delete next[qi]
+      else next[qi] = true
+      return next
+    })
   }
 
   async function doSubmit() {
@@ -156,86 +206,187 @@ export default function TakeTest({ test, profile, onDone }) {
       setError('Topshirishni yakunlashda xatolik: ' + updErr.message)
       return
     }
-    onDone()
-  }
-
-  function handleSubmitClick() {
-    if (test.access === 'one_time') {
-      const ok = confirm("Bu bir martalik test. Topshirgandan keyin uni qayta topshira olmaysiz. Topshirasizmi?")
-      if (!ok) return
+    try {
+      localStorage.removeItem(draftKey)
+    } catch (_) {
+      // e'tiborsiz
     }
-    doSubmit()
+    onDone()
   }
 
   if (loading) return <p>Test yuklanmoqda...</p>
   if (error && !attempt) return <div className="error">{error}</div>
-  if (!attempt) return null
+  if (!attempt || plan.length === 0) return null
 
-  const q = questions[current]
+  const item = plan[current]
+  const qi = item.qi
+  const q = questions[qi]
   const minutes = remaining !== null ? Math.floor(remaining / 60) : Math.floor(test.duration_minutes)
   const seconds = remaining !== null ? Math.floor(remaining % 60) : 0
 
+  // Oxirgi 5 daqiqa (qisqa testlarda — vaqtning uchdan biri) ogohlantirish
+  const warnSec = Math.min(300, Math.floor((test.duration_minutes * 60) / 3))
+  const low = remaining !== null && remaining > 0 && remaining <= warnSec
+
+  const unansweredPos = plan.map((p, pos) => (isBlank(answers[p.qi]) ? pos : -1)).filter((x) => x >= 0)
+  const flaggedPos = plan.map((p, pos) => (flags[p.qi] ? pos : -1)).filter((x) => x >= 0)
+
+  function goTo(pos) {
+    setCurrent(pos)
+    setShowSubmit(false)
+  }
+
+  function Chips({ list }) {
+    const shown = list.slice(0, 40)
+    return (
+      <div className="chips">
+        {shown.map((pos) => (
+          <button key={pos} type="button" className="chip chip-btn" onClick={() => goTo(pos)}>
+            {pos + 1}
+          </button>
+        ))}
+        {list.length > shown.length && <span className="muted">... va yana {list.length - shown.length} ta</span>}
+      </div>
+    )
+  }
+
   return (
-    <div>
-      <div className="test-header">
+    <div className="take-test">
+      <div className="test-header sticky-head">
         <h2>{test.title}</h2>
         <div className="header-actions">
           <button className="secondary-btn" onClick={() => setShowNav(true)}>
             Barcha savollar
           </button>
-          <div className="timer">
-            Qolgan vaqt: {minutes}:{String(seconds).padStart(2, '0')}
+          <div className={`timer${low ? ' timer-low' : ''}`}>
+            {minutes}:{String(seconds).padStart(2, '0')}
           </div>
         </div>
       </div>
+
+      {low && !warnDismissed && (
+        <div className="banner banner-danger dismissible" role="alert">
+          <span>
+            Vaqt tugashiga oz qoldi! Javoblaringizni tekshirib, testni topshiring. Vaqt tugasa, test o'zi topshiriladi.
+          </span>
+          <button className="modal-close" onClick={() => setWarnDismissed(true)} aria-label="Yopish">
+            ✕
+          </button>
+        </div>
+      )}
       {error && <div className="error">{error}</div>}
-      <p>
-        Savol {current + 1} / {questions.length}
-      </p>
+
+      <div className="q-meta">
+        <span>
+          Savol {current + 1} / {questions.length}
+        </span>
+        <button
+          type="button"
+          className={`flag-btn${flags[qi] ? ' on' : ''}`}
+          onClick={() => toggleFlag(qi)}
+          aria-pressed={!!flags[qi]}
+        >
+          <FlagIcon filled={!!flags[qi]} />
+          {flags[qi] ? 'Belgi qo‘yilgan' : "Qayta ko'rish uchun belgilash"}
+        </button>
+      </div>
+
       <div className="card">
         <p className="question-text">{q.question}</p>
         {q.type === 'mcq' ? (
           <div className="options">
-            {q.options.map((opt, idx) => (
-              <label key={idx} className="option">
-                <input type="radio" name={`q${current}`} checked={answers[current] === idx} onChange={() => setAnswer(idx)} />
-                {opt}
+            {item.opts.map((origIdx) => (
+              <label key={origIdx} className={`option option-card${answers[qi] === origIdx ? ' selected' : ''}`}>
+                <input
+                  type="radio"
+                  name={`q${qi}`}
+                  checked={answers[qi] === origIdx}
+                  onChange={() => setAnswer(qi, origIdx)}
+                />
+                <span className="question-text">{q.options[origIdx]}</span>
               </label>
             ))}
           </div>
         ) : (
           <textarea
-            rows={5}
+            rows={6}
             placeholder="Javobingizni yozing..."
-            value={answers[current] || ''}
-            onChange={(e) => setAnswer(e.target.value)}
+            value={answers[qi] || ''}
+            onChange={(e) => setAnswer(qi, e.target.value)}
           />
         )}
       </div>
+
       <div className="nav-buttons">
-        <button disabled={current === 0} onClick={() => setCurrent((c) => c - 1)}>
+        <button className="secondary-btn" disabled={current === 0} onClick={() => setCurrent((c) => c - 1)}>
           Oldingi
         </button>
         {current < questions.length - 1 ? (
           <button onClick={() => setCurrent((c) => c + 1)}>Keyingi</button>
         ) : (
-          <button disabled={submitting} onClick={handleSubmitClick}>
+          <button className="btn-green" disabled={submitting} onClick={() => setShowSubmit(true)}>
             {submitting ? 'Topshirilmoqda...' : 'Topshirish'}
           </button>
         )}
       </div>
+
       {showNav && (
         <QuestionNavigator
           total={questions.length}
           current={current}
           mode="test"
-          statusOf={(i) => (isBlank(answers[i]) ? 'unanswered' : 'answered')}
-          onSelect={(i) => {
-            setCurrent(i)
+          statusOf={(pos) => (isBlank(answers[plan[pos].qi]) ? 'unanswered' : 'answered')}
+          flaggedOf={(pos) => !!flags[plan[pos].qi]}
+          onSelect={(pos) => {
+            setCurrent(pos)
             setShowNav(false)
           }}
           onClose={() => setShowNav(false)}
         />
+      )}
+
+      {showSubmit && (
+        <div className="modal-backdrop" onClick={() => setShowSubmit(false)}>
+          <div className="modal-card" role="dialog" aria-modal="true" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-head">
+              <h3>Testni topshirish</h3>
+              <button className="modal-close" onClick={() => setShowSubmit(false)} aria-label="Yopish">
+                ✕
+              </button>
+            </div>
+            {unansweredPos.length === 0 && flaggedPos.length === 0 && <p>Barcha savollarga javob berdingiz.</p>}
+            {unansweredPos.length > 0 && (
+              <div className="confirm-block warn">
+                <strong>{unansweredPos.length} ta savolga javob bermadingiz.</strong>
+                <Chips list={unansweredPos} />
+              </div>
+            )}
+            {flaggedPos.length > 0 && (
+              <div className="confirm-block flag">
+                <strong>{flaggedPos.length} ta savol qayta ko'rish uchun belgilangan.</strong>
+                <Chips list={flaggedPos} />
+              </div>
+            )}
+            {test.access === 'one_time' && (
+              <p className="muted">Bu bir martalik test: topshirgandan keyin uni qayta topshira olmaysiz.</p>
+            )}
+            <div className="form-actions">
+              <button className="secondary-btn" onClick={() => setShowSubmit(false)}>
+                Testga qaytish
+              </button>
+              <button
+                className="btn-green"
+                disabled={submitting}
+                onClick={() => {
+                  setShowSubmit(false)
+                  doSubmit()
+                }}
+              >
+                {submitting ? 'Topshirilmoqda...' : 'Topshirish'}
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   )

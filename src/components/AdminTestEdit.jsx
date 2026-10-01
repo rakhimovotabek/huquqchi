@@ -1,15 +1,22 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '../lib/supabase'
 import { extractQuestions, parseDuration, validateQuestions } from '../lib/testJson'
+import { fromLocalInput, toLocalInput } from '../lib/format'
 
-// Administrator test nomini, davomiyligini va savollarini tahrirlaydi.
+// Administrator test nomini, davomiyligini, savollarini va (ixtiyoriy) qo'shimcha sozlamalarini tahrirlaydi.
 export default function AdminTestEdit({ test, onBack, onSaved }) {
   const [title, setTitle] = useState(test.title)
   const [duration, setDuration] = useState(String(test.duration_minutes))
   const [json, setJson] = useState(JSON.stringify(test.questions_json, null, 2))
+  const [shuffle, setShuffle] = useState(!!test.shuffle)
+  const [leaderboard, setLeaderboard] = useState(!!test.show_leaderboard)
+  const [opensAt, setOpensAt] = useState(toLocalInput(test.opens_at))
+  const [closesAt, setClosesAt] = useState(toLocalInput(test.closes_at))
   const [attemptCount, setAttemptCount] = useState(0)
   const [error, setError] = useState('')
   const [saving, setSaving] = useState(false)
+
+  const hasExtras = shuffle || leaderboard || opensAt || closesAt
 
   useEffect(() => {
     // Bu testni allaqachon topshirgan talabalar bormi?
@@ -50,16 +57,35 @@ export default function AdminTestEdit({ test, onBack, onSaved }) {
       return
     }
 
+    const opens = fromLocalInput(opensAt)
+    const closes = fromLocalInput(closesAt)
+    if (opens && closes && new Date(closes) <= new Date(opens)) {
+      setError("Yopilish vaqti ochilish vaqtidan keyin bo'lishi kerak")
+      return
+    }
+
     setSaving(true)
     const { data, error: updErr } = await supabase
       .from('tests')
-      .update({ title: cleanTitle, duration_minutes: minutes, questions_json: questions })
+      .update({
+        title: cleanTitle,
+        duration_minutes: minutes,
+        questions_json: questions,
+        shuffle,
+        show_leaderboard: leaderboard,
+        opens_at: opens,
+        closes_at: closes
+      })
       .eq('id', test.id)
       .select()
       .single()
     setSaving(false)
     if (updErr) {
-      setError('Saqlashda xatolik: ' + updErr.message)
+      let msg = 'Saqlashda xatolik: ' + updErr.message
+      if (/column|schema cache/i.test(updErr.message)) {
+        msg += " (supabase/migration_v2.sql faylini SQL Editor'da bir marta ishga tushiring)"
+      }
+      setError(msg)
       return
     }
     onSaved(data)
@@ -67,7 +93,9 @@ export default function AdminTestEdit({ test, onBack, onSaved }) {
 
   return (
     <div>
-      <button onClick={onBack}>← Testlarga qaytish</button>
+      <button className="secondary-btn" onClick={onBack}>
+        ← Testlarga qaytish
+      </button>
       <h2>Testni tahrirlash</h2>
       {attemptCount > 0 && (
         <div className="banner banner-warn">
@@ -76,7 +104,7 @@ export default function AdminTestEdit({ test, onBack, onSaved }) {
         </div>
       )}
       {error && <div className="error">{error}</div>}
-      <form className="stack-form" onSubmit={handleSave}>
+      <form className="form-card form-card-lg" onSubmit={handleSave}>
         <div className="import-row">
           <div>
             <label>Test nomi</label>
@@ -87,14 +115,62 @@ export default function AdminTestEdit({ test, onBack, onSaved }) {
             <input type="number" min="1" value={duration} onChange={(e) => setDuration(e.target.value)} />
           </div>
         </div>
+
+        <details className="format-help" open={hasExtras}>
+          <summary>Qo'shimcha sozlamalar (ixtiyoriy)</summary>
+          <div className="extras">
+            <label className="check-line">
+              <input type="checkbox" checked={shuffle} onChange={(e) => setShuffle(e.target.checked)} />
+              <span>
+                Savollar va variantlar tartibini har bir talaba uchun aralashtirish
+                <small>Ko'chirib yozishning oldini olishga yordam beradi.</small>
+              </span>
+            </label>
+            <label className="check-line">
+              <input type="checkbox" checked={leaderboard} onChange={(e) => setLeaderboard(e.target.checked)} />
+              <span>
+                Talabalarga reytingni ko'rsatish (eng yaxshi 10 ta)
+                <small>Talaba testni topshirgandan keyin natijalar sahifasida "Reyting" tugmasi chiqadi.</small>
+              </span>
+            </label>
+            <div className="import-row dates-row">
+              <div>
+                <label>Ochilish vaqti</label>
+                <input type="datetime-local" value={opensAt} onChange={(e) => setOpensAt(e.target.value)} />
+              </div>
+              <div>
+                <label>Yopilish vaqti</label>
+                <input type="datetime-local" value={closesAt} onChange={(e) => setClosesAt(e.target.value)} />
+              </div>
+            </div>
+            <p className="muted">
+              Vaqt qo'yilmasa, test faqat "Ruxsat berish" / "Yopish" tugmalari bilan boshqariladi. Vaqt qo'yilsa, test
+              "Yopiq" bo'lmasa ham faqat shu oraliqda boshlanadi. Yopilish vaqtida allaqachon boshlagan talaba testini
+              tugatishda davom etadi.
+            </p>
+            {(opensAt || closesAt) && (
+              <button
+                type="button"
+                className="secondary-btn small"
+                onClick={() => {
+                  setOpensAt('')
+                  setClosesAt('')
+                }}
+              >
+                Vaqtni tozalash
+              </button>
+            )}
+          </div>
+        </details>
+
         <label>Savollar (JSON)</label>
-        <textarea rows={22} value={json} onChange={(e) => setJson(e.target.value)} spellCheck={false} />
-        <div className="button-row">
-          <button type="submit" disabled={saving}>
-            {saving ? 'Saqlanmoqda...' : 'Saqlash'}
-          </button>
+        <textarea rows={20} value={json} onChange={(e) => setJson(e.target.value)} spellCheck={false} />
+        <div className="form-actions">
           <button type="button" className="secondary-btn" onClick={onBack}>
             Bekor qilish
+          </button>
+          <button type="submit" disabled={saving}>
+            {saving ? 'Saqlanmoqda...' : 'Saqlash'}
           </button>
         </div>
       </form>

@@ -32,6 +32,8 @@ https://nodejs.org saytidan Node.js 18 yoki undan yangi versiyasini o'rnating.
 
 > **Xatolik: "Could not find the 'access' column" yoki "column tests.access does not exist"?** Demak, baza hali yangilanmagan. `supabase/migration_access.sql` faylini SQL Editor'da to'liq ishga tushiring (bir marta Run). U ustunni qo'shadi, mavjud testlarni "Ruxsat berilgan" qiladi va API keshini yangilaydi.
 
+> **v2 yangilanishi (MUHIM):** yangi imkoniyatlar (test jadvali, aralashtirish, reyting, tanlangan talabalarga ruxsat) ishlashi uchun `supabase/migration_v2.sql` faylini SQL Editor'da bir marta to'liq ishga tushiring. Qayta ishga tushirsangiz ham xavfsiz, ma'lumotlar o'chmaydi. Yangi o'rnatishda buni `schema.sql` o'zi bajaradi.
+
 > **Talaba parollarini ko'rish uchun** (admin → Talabalar → talaba profili) `supabase/migration_student_passwords.sql` faylini ham SQL Editor'da bir marta ishga tushiring. Parollar oddiy matn ko'rinishida saqlanadi va faqat administrator o'qiy oladi.
 
 > **Eski baza uchun (yangilash):** agar ilovani avval ishlatgan bo'lsangiz, shu `schema.sql` faylini yana bir marta to'liq ishga tushiring. Fayl qayta ishga tushirilganda ma'lumotlarni o'chirmaydi: testlar jadvaliga `access` (kirish huquqi) ustunini qo'shadi va yangi qoidalarni o'rnatadi. **Mavjud testlar avtomatik "Ruxsat berilgan" holatda qoladi**, ya'ni talabalarga ko'rinishda davom etadi.
@@ -114,6 +116,13 @@ Chop etilgan manzilni (odatda `http://localhost:5173`) oching va administrator s
   - **Yopish** — testni yana talabalardan yashiradi. Testni allaqachon topshirgan talabalar o'z natijalarini ko'rishda davom etadi.
 - **Natijalar** — barcha topshirilgan urinishlar. **"Filtr"** tugmasi orqali test bo'yicha (ro'yxatda yopiq va bir martalik testlar ham bor), talaba nomi bo'yicha va sana oralig'i bo'yicha saralash mumkin. Istalgan urinish uchun **"Ko'rish"** tugmasi talabaning barcha javoblarini savolma-savol ko'rsatadi (to'g'ri javob, talaba javobi, natija). Savollar orasida **chap / o'ng strelka** tugmalari bilan yurish mumkin. "Tekshiruvni kutmoqda" holatidagi urinish uchun "Baholash" tugmasini bosing va har bir ochiq javobni "To'g'ri" yoki "Noto'g'ri" deb belgilang. Barcha javoblar baholangach, yakuniy ball avtomatik hisoblanadi.
 - **Bo'sh qoldirilgan ochiq javoblar** adminga ko'rsatilmaydi — ular avtomatik "noto'g'ri" hisoblanadi.
+
+**Yangi imkoniyatlar (hammasi ixtiyoriy):**
+- **Testlar ro'yxatida qidiruv** va **bir nechta testni belgilab** birdaniga "Ruxsat berish" / "Bir martalik" / "Yopish".
+- **Statistika** tugmasi — testni topshirishlar soni, o'rtacha va eng yuqori natija, eng ko'p xato qilingan savollar va eng yaxshi 10 talaba.
+- **Qo'shimcha sozlamalar** (testni tahrirlash sahifasida): savol va variantlarni har bir talaba uchun **aralashtirish**; talabalarga **reytingni ko'rsatish**; testning **ochilish va yopilish vaqti**. Vaqt qo'yilsa, test faqat shu oraliqda boshlanadi (boshlab qo'ygan talaba tugatishda davom etadi).
+- **Talabalar bo'limida** talabalarni belgilab, testni tanlang va **"Testga ruxsat berish"** bosing: test faqat shu talabalarga ko'rinadi (holati "Tanlanganlarga"). "Ruxsatni olib tashlash" ham bor.
+- **Talaba uchun:** oxirgi 5 daqiqada taymer qizarib ogohlantiradi; topshirishdan oldin javob berilmagan va belgilangan savollar ko'rsatiladi; savolni "qayta ko'rish uchun belgilash" mumkin (savollar oynasida sariq belgi); javoblar shu qurilmada vaqtincha saqlanadi, sahifa yangilansa yo'qolmaydi.
 
 **Test JSON formati:**
 
