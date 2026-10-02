@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { supabase } from './lib/supabase'
+import { navigate } from './lib/router'
 import Login from './pages/Login'
 import AdminPanel from './pages/AdminPanel'
 import StudentPanel from './pages/StudentPanel'
@@ -60,6 +61,7 @@ export default function App() {
     await supabase.auth.signOut()
     setSession(null)
     setProfile(null)
+    navigate('/', { replace: true })
   }
 
   if (loading) {

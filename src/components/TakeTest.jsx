@@ -2,9 +2,11 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { supabase } from '../lib/supabase'
 import { isBlank } from '../lib/format'
 import { buildPlan } from '../lib/shuffle'
+import { gradeAnswers } from '../lib/grading'
+import { useFocusGuard } from '../lib/useFocusGuard'
 import { useArrowKeys } from '../lib/useArrowKeys'
 import QuestionNavigator from './QuestionNavigator'
-import { FlagIcon } from './Icons'
+import { FlagIcon, LockIcon } from './Icons'
 
 export default function TakeTest({ test, profile, onDone }) {
   const [attempt, setAttempt] = useState(null)
@@ -21,6 +23,13 @@ export default function TakeTest({ test, profile, onDone }) {
   const [warnDismissed, setWarnDismissed] = useState(false)
   const submittedRef = useRef(false)
   const [draftLoaded, setDraftLoaded] = useState(false)
+  // Blok: talaba test oynasidan chiqsa, ustoz ruxsat bergunicha test bloklanadi
+  const [lock, setLock] = useState(null)
+  const [warn, setWarn] = useState(false) // "Avtomatik ruxsat" yoqilgan bo'lsa: faqat ogohlantirish
+  const lockRef = useRef(null)
+  lockRef.current = lock
+  const answersRef = useRef({})
+  answersRef.current = answers
 
   const questions = test.questions_json
   const draftKey = attempt ? `draft:${attempt.id}` : null
@@ -37,6 +46,89 @@ export default function TakeTest({ test, profile, onDone }) {
     onLeft: () => setCurrent((c) => Math.max(0, c - 1)),
     onRight: () => setCurrent((c) => Math.min(questions.length - 1, c + 1))
   })
+
+  // Test paytida boshqa oynaga/yorliqqa o'tilsa, blok qo'yiladi
+  useFocusGuard({
+    enabled: !!attempt && !lock && !warn && !submitting,
+    onViolation: (reason) => reportViolation(reason)
+  })
+
+  // Sahifa yangilansa yoki boshqa qurilmadan kirilsa ham, hal qilinmagan blok saqlanib qoladi
+  useEffect(() => {
+    if (!attempt) return
+    supabase
+      .from('violations')
+      .select('*')
+      .eq('attempt_id', attempt.id)
+      .eq('status', 'open')
+      .maybeSingle()
+      .then(({ data }) => {
+        if (data) setLock(data)
+      })
+  }, [attempt?.id])
+
+  // Blok paytida ustoz qarorini kutamiz (har 3 soniyada tekshiriladi)
+  useEffect(() => {
+    if (!lock?.id || lock.status !== 'open') return undefined
+    const timer = setInterval(async () => {
+      const { data } = await supabase.from('violations').select('*').eq('id', lock.id).maybeSingle()
+      if (!data || data.status === 'open') return
+      if (data.status === 'resumed') {
+        // Ustoz vaqtni qaytargan: yangilangan boshlanish vaqtini olamiz
+        const { data: fresh } = await supabase.from('attempts').select('*').eq('id', attempt.id).single()
+        if (fresh) setAttempt(fresh)
+        setLock(null)
+      } else {
+        setLock(data)
+      }
+    }, 3000)
+    return () => clearInterval(timer)
+  }, [lock?.id, lock?.status])
+
+  async function reportViolation(reason) {
+    if (lockRef.current || submittedRef.current || !attempt) return
+    const pending = { id: null, status: 'open', pending: true }
+    lockRef.current = pending
+    setLock(pending) // ekran darrov yopiladi
+
+    // Ustoz "Avtomatik ruxsat" ni yoqqan bo'lsa: blok yo'q, faqat ogohlantirish ko'rsatiladi
+    const { data: setting } = await supabase.from('app_settings').select('value').eq('key', 'auto_allow').maybeSingle()
+    if (setting?.value === 'true') {
+      lockRef.current = null
+      setLock(null)
+      setWarn(true)
+      return
+    }
+    const { data, error: insErr } = await supabase
+      .from('violations')
+      .insert({
+        attempt_id: attempt.id,
+        student_id: profile.id,
+        reason,
+        answers: answersRef.current
+      })
+      .select()
+      .single()
+    if (!insErr) {
+      setLock(data)
+      return
+    }
+    // Shu urinish uchun ochiq blok allaqachon bo'lishi mumkin
+    const { data: existing } = await supabase
+      .from('violations')
+      .select('*')
+      .eq('attempt_id', attempt.id)
+      .eq('status', 'open')
+      .maybeSingle()
+    if (existing) {
+      setLock(existing)
+    } else {
+      // Jadval yo'q (migration_v6.sql ishga tushirilmagan) yoki tarmoq xatosi: testni to'xtatmaymiz
+      console.warn('Blokni saqlab bo\'lmadi:', insErr.message)
+      lockRef.current = null
+      setLock(null)
+    }
+  }
 
   useEffect(() => {
     initAttempt()
@@ -77,7 +169,7 @@ export default function TakeTest({ test, profile, onDone }) {
       const elapsedSec = (Date.now() - startedAt) / 1000
       const remainingSec = Math.max(0, test.duration_minutes * 60 - elapsedSec)
       setRemaining(remainingSec)
-      if (remainingSec <= 0 && !submittedRef.current) {
+      if (remainingSec <= 0 && !submittedRef.current && !lockRef.current) {
         submittedRef.current = true
         doSubmit()
       }
@@ -150,42 +242,7 @@ export default function TakeTest({ test, profile, onDone }) {
     setSubmitting(true)
     setError('')
 
-    let mcqScore = 0
-    let hasOpenToReview = false
-
-    const rows = questions.map((q, i) => {
-      const studentAnswer = answers[i]
-      const hasAnswer = !isBlank(studentAnswer)
-      if (q.type === 'mcq') {
-        const isCorrect = hasAnswer && Number(studentAnswer) === Number(q.correctAnswer)
-        if (isCorrect) mcqScore++
-        return {
-          attempt_id: attempt.id,
-          question_index: i,
-          answer: hasAnswer ? String(studentAnswer) : null,
-          is_correct: isCorrect,
-          reviewed: true
-        }
-      }
-      // Ochiq savol: bo'sh qoldirilgan bo'lsa admin ko'rmaydi, avtomatik "noto'g'ri" bo'ladi
-      if (!hasAnswer) {
-        return {
-          attempt_id: attempt.id,
-          question_index: i,
-          answer: null,
-          is_correct: false,
-          reviewed: true
-        }
-      }
-      hasOpenToReview = true
-      return {
-        attempt_id: attempt.id,
-        question_index: i,
-        answer: String(studentAnswer).trim(),
-        is_correct: null,
-        reviewed: false
-      }
-    })
+    const { rows, score, status } = gradeAnswers(questions, answers, attempt.id)
 
     const { error: ansErr } = await supabase.from('answers').insert(rows)
     if (ansErr) {
@@ -195,10 +252,9 @@ export default function TakeTest({ test, profile, onDone }) {
       return
     }
 
-    const status = hasOpenToReview ? 'pending_review' : 'completed'
     const { error: updErr } = await supabase
       .from('attempts')
-      .update({ submitted_at: new Date().toISOString(), score: mcqScore, status })
+      .update({ submitted_at: new Date().toISOString(), score, status })
       .eq('id', attempt.id)
 
     setSubmitting(false)
@@ -217,6 +273,67 @@ export default function TakeTest({ test, profile, onDone }) {
   if (loading) return <p>Test yuklanmoqda...</p>
   if (error && !attempt) return <div className="error">{error}</div>
   if (!attempt || plan.length === 0) return null
+
+  if (warn) {
+    return (
+      <div className="lock-screen" role="alert">
+        <div className="lock-card">
+          <div className="lock-icon lock-icon-warn">
+            <LockIcon />
+          </div>
+          <h2>Ogohlantirish</h2>
+          <p>
+            Test paytida boshqa oyna, yorliq yoki ilovaga o'tmang! Bu qoidabuzarlik hisoblanadi va keyingi safar test
+            bloklanishi mumkin.
+          </p>
+          <button onClick={() => setWarn(false)}>Tushunarli, testni davom ettiraman</button>
+        </div>
+      </div>
+    )
+  }
+
+  if (lock) {
+    const finished = lock.status === 'finished'
+    return (
+      <div className="lock-screen" role="alert">
+        <div className="lock-card">
+          <div className="lock-icon">
+            <LockIcon />
+          </div>
+          {lock.pending ? (
+            <p className="muted">Tekshirilmoqda...</p>
+          ) : finished ? (
+            <>
+              <h2>Test yakunlandi</h2>
+              <p>Ustoz testingizni yakunladi. Natijangizni "Natijalar" bo'limida ko'rasiz.</p>
+              <button
+                onClick={() => {
+                  try {
+                    localStorage.removeItem(draftKey)
+                  } catch (_) {
+                    // e'tiborsiz
+                  }
+                  onDone()
+                }}
+              >
+                Tushunarli
+              </button>
+            </>
+          ) : (
+            <>
+              <h2>Test bloklandi</h2>
+              <p>Siz test oynasidan chiqdingiz (boshqa oyna, yorliq yoki ilovaga o'tdingiz). Bu ustozga bildirildi.</p>
+              <p>
+                <strong>Davom etish uchun ustozdan ruxsat so'rang.</strong> Ruxsat berilgach, test qolgan joyidan davom
+                etadi.
+              </p>
+              <p className="muted">Bu sahifani yopmang va yangilamang. Javoblaringiz saqlangan.</p>
+            </>
+          )}
+        </div>
+      </div>
+    )
+  }
 
   const item = plan[current]
   const qi = item.qi

@@ -3,7 +3,7 @@ import { supabase } from '../lib/supabase'
 import { formatDate } from '../lib/format'
 import TakeTest from './TakeTest'
 
-export default function StudentTests({ profile, newCount = 0, onOpenResults }) {
+export default function StudentTests({ profile, newCount = 0, onOpenResults, onTestingChange }) {
   const [tests, setTests] = useState([])
   const [resumeIds, setResumeIds] = useState(() => new Set())
   const [error, setError] = useState('')
@@ -12,6 +12,14 @@ export default function StudentTests({ profile, newCount = 0, onOpenResults }) {
 
   useEffect(() => {
     if (!activeTest) loadTests()
+  }, [activeTest])
+
+  // Test topshirilayotganda boshqa bo'limlarga o'tib bo'lmaydi (ota panel menyuni yashiradi)
+  useEffect(() => {
+    if (onTestingChange) onTestingChange(!!activeTest)
+    return () => {
+      if (onTestingChange) onTestingChange(false)
+    }
   }, [activeTest])
 
   async function loadTests() {

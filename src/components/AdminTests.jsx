@@ -4,6 +4,7 @@ import { fetchAll } from '../lib/paged'
 import { formatDate } from '../lib/format'
 import AdminTestEdit from './AdminTestEdit'
 import AdminTestStats from './AdminTestStats'
+import AccessModal from './AccessModal'
 import { TrashIcon, PencilIcon } from './Icons'
 import { extractQuestions, parseDuration, readMeta, validateQuestions } from '../lib/testJson'
 
@@ -46,6 +47,8 @@ export default function AdminTests() {
   const [listLoading, setListLoading] = useState(true)
   const [query, setQuery] = useState('')
   const [selected, setSelected] = useState(() => new Set())
+  const [groups, setGroups] = useState([])
+  const [accessTargets, setAccessTargets] = useState(null)
 
   useEffect(() => {
     loadTests()
@@ -66,6 +69,10 @@ export default function AdminTests() {
       counts[r.test_id] = (counts[r.test_id] || 0) + 1
     })
     setAccessCounts(counts)
+
+    // Guruhlar (migration_v5.sql ishga tushirilmagan bo'lsa, ro'yxat bo'sh qoladi)
+    const { data: groupRows } = await supabase.from('groups').select('id, name').order('name')
+    setGroups(groupRows || [])
     setListLoading(false)
   }
 
@@ -274,11 +281,8 @@ export default function AdminTests() {
         <div className="bulk-bar">
           <strong>{selected.size} ta test tanlandi</strong>
           <div className="action-cell">
-            <button className="btn-green" onClick={() => bulkAccess('allowed')}>
+            <button className="btn-green" onClick={() => setAccessTargets(tests.filter((t) => selected.has(t.id)))}>
               Ruxsat berish
-            </button>
-            <button className="btn-amber" onClick={() => bulkAccess('one_time')}>
-              Bir martalik
             </button>
             <button className="btn-red" onClick={() => bulkAccess('locked')}>
               Yopish
@@ -333,8 +337,13 @@ export default function AdminTests() {
                           <button className="link-btn test-title" title="Statistika va savollarni ochish" onClick={() => setStatsTest(t)}>
                             {t.title}
                           </button>
-                          {(t.opens_at || t.closes_at || t.shuffle || t.show_leaderboard) && (
+                          {(t.opens_at || t.closes_at || t.shuffle || t.show_leaderboard || t.group_id) && (
                             <div className="chips">
+                              {t.group_id && (
+                                <span className="chip chip-blue">
+                                  Guruh: {groups.find((g) => g.id === t.group_id)?.name || '…'}
+                                </span>
+                              )}
                               {(t.opens_at || t.closes_at) && (
                                 <span className="chip">
                                   {formatDate(t.opens_at) || '…'} → {formatDate(t.closes_at) || '…'}
@@ -357,20 +366,19 @@ export default function AdminTests() {
                     </td>
                     <td>
                       <div className="action-cell">
-                        {t.access !== 'allowed' && (
-                          <button className="btn-green" onClick={() => setAccess([t.id], 'allowed')}>
+                        {t.access === 'locked' ? (
+                          <button className="btn-green" onClick={() => setAccessTargets([t])}>
                             Ruxsat berish
                           </button>
-                        )}
-                        {t.access !== 'one_time' && (
-                          <button className="btn-amber" onClick={() => setAccess([t.id], 'one_time')}>
-                            Bir martalik
-                          </button>
-                        )}
-                        {t.access !== 'locked' && (
-                          <button className="btn-red" onClick={() => setAccess([t.id], 'locked')}>
-                            Yopish
-                          </button>
+                        ) : (
+                          <>
+                            <button className="secondary-btn" onClick={() => setAccessTargets([t])}>
+                              Sozlash
+                            </button>
+                            <button className="btn-red" onClick={() => setAccess([t.id], 'locked')}>
+                              Yopish
+                            </button>
+                          </>
                         )}
                         <button
                           className="icon-btn"
@@ -397,8 +405,22 @@ export default function AdminTests() {
         </div>
       )}
       <p className="muted hint">
-        "Tanlanganlarga" holati: Talabalar bo'limida talabalarni belgilab, testni tanlang va "Ruxsat berish" bosing.
+        "Ruxsat berish" oynasida: kimga (hamma yoki bitta guruh), aralashtirish, vaqt oralig'i va bir martalik
+        sozlanadi. Alohida talabalarga ochish uchun Talabalar bo'limidan foydalaning.
       </p>
+      {accessTargets && (
+        <AccessModal
+          tests={accessTargets}
+          groups={groups}
+          onClose={() => setAccessTargets(null)}
+          onSaved={(msg) => {
+            setAccessTargets(null)
+            setSelected(new Set())
+            setNotice(msg)
+            loadTests()
+          }}
+        />
+      )}
     </div>
   )
 }

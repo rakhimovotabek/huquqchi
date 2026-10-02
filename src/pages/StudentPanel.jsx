@@ -1,13 +1,22 @@
 import { useCallback, useEffect, useState } from 'react'
 import { supabase } from '../lib/supabase'
+import { useTabRoute } from '../lib/router'
 import StudentTests from '../components/StudentTests'
 import StudentResults from '../components/StudentResults'
 import StudentProfile from '../components/StudentProfile'
 import { UserIcon } from '../components/Icons'
 import { APP_NAME } from '../lib/brand'
 
+// Har bir bo'lim o'z manziliga ega: /testlar, /natijalar, /profil
+const TABS = [
+  { key: 'tests', path: 'testlar', label: 'Testlar' },
+  { key: 'results', path: 'natijalar', label: 'Natijalar' },
+  { key: 'profile', path: 'profil', label: 'Profil' }
+]
+
 export default function StudentPanel({ profile, onLogout }) {
-  const [tab, setTab] = useState('tests')
+  const [tab, setTab] = useTabRoute(TABS)
+  const [testing, setTesting] = useState(false) // test topshirilayotganda bo'limlar yashiriladi
   const [newCount, setNewCount] = useState(0)
 
   // Yangi (talaba hali ochmagan) baholangan natijalar soni
@@ -35,18 +44,23 @@ export default function StudentPanel({ profile, onLogout }) {
       <header className="topbar">
         <span>{APP_NAME}</span>
         <div className="topbar-actions">
-          <button
-            className={`profile-btn${tab === 'profile' ? ' active' : ''}`}
-            onClick={() => setTab('profile')}
-            aria-label="Profil"
-            title="Profil"
-          >
-            <UserIcon />
-            <span className="profile-name">{profile.username}</span>
+          {!testing && (
+            <button
+              className={`profile-btn${tab === 'profile' ? ' active' : ''}`}
+              onClick={() => setTab('profile')}
+              aria-label="Profil"
+              title="Profil"
+            >
+              <UserIcon />
+              <span className="profile-name">{profile.username}</span>
+            </button>
+          )}
+          <button onClick={onLogout} disabled={testing}>
+            Chiqish
           </button>
-          <button onClick={onLogout}>Chiqish</button>
         </div>
       </header>
+      {!testing && (
       <nav className="tabs">
         <button className={tab === 'tests' ? 'active' : ''} onClick={() => setTab('tests')}>
           Testlar
@@ -56,9 +70,15 @@ export default function StudentPanel({ profile, onLogout }) {
           {newCount > 0 && <span className="new-pill">Yangi natija</span>}
         </button>
       </nav>
+      )}
       <main className="content">
         {tab === 'tests' && (
-          <StudentTests profile={profile} newCount={newCount} onOpenResults={() => setTab('results')} />
+          <StudentTests
+            profile={profile}
+            newCount={newCount}
+            onOpenResults={() => setTab('results')}
+            onTestingChange={setTesting}
+          />
         )}
         {tab === 'results' && <StudentResults profile={profile} onSeen={refreshNew} />}
         {tab === 'profile' && <StudentProfile profile={profile} />}

@@ -5,6 +5,7 @@ import { deleteAttempts } from '../lib/deleteAttempts'
 import { TrashIcon } from './Icons'
 import AdminReviewAttempt from './AdminReviewAttempt'
 import ReviewResult from './ReviewResult'
+import AdminGradeByQuestion from './AdminGradeByQuestion'
 
 export default function AdminResults() {
   const [attempts, setAttempts] = useState([])
@@ -12,6 +13,7 @@ export default function AdminResults() {
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(true)
   const [notice, setNotice] = useState('')
+  const [byQuestion, setByQuestion] = useState(false)
   const [selected, setSelected] = useState(() => new Set())
   // { id, mode: 'grade' | 'view', studentName }
   const [openAttempt, setOpenAttempt] = useState(null)
@@ -24,8 +26,8 @@ export default function AdminResults() {
   const [fTo, setFTo] = useState('')
 
   useEffect(() => {
-    if (!openAttempt) loadAttempts()
-  }, [openAttempt])
+    if (!openAttempt && !byQuestion) loadAttempts()
+  }, [openAttempt, byQuestion])
 
   async function loadAttempts() {
     setLoading(true)
@@ -59,6 +61,10 @@ export default function AdminResults() {
     } catch (err) {
       setError("O'chirishda xatolik: " + err.message)
     }
+  }
+
+  if (byQuestion) {
+    return <AdminGradeByQuestion onBack={() => setByQuestion(false)} />
   }
 
   if (openAttempt?.mode === 'grade') {
@@ -128,6 +134,7 @@ export default function AdminResults() {
       {error && <div className="error">{error}</div>}
       {notice && <div className="success">{notice}</div>}
       <div className="action-cell">
+        <button onClick={() => setByQuestion(true)}>Savol bo'yicha tekshirish</button>
         <button className="secondary-btn" onClick={() => setFilterOpen((v) => !v)}>
           Filtr{activeFilters > 0 ? ` (${activeFilters})` : ''}
         </button>

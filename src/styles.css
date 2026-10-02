@@ -1372,3 +1372,233 @@ button:disabled {
   border-color: #fca5a5;
   background: #fef2f2;
 }
+
+/* ---------- v5: guruhlar, ruxsat oynasi ---------- */
+.opt-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.opt-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  margin: 0;
+  font-weight: 400;
+  cursor: pointer;
+}
+
+.opt-row input {
+  width: auto;
+  margin-top: 3px;
+  flex-shrink: 0;
+}
+
+.opt-block {
+  margin: 14px 0;
+}
+
+.opt-row small {
+  display: block;
+}
+
+.warn-note {
+  background: #fffbeb;
+  border: 1px solid #fcd34d;
+  color: #92400e;
+  border-radius: 10px;
+  padding: 8px 12px;
+  margin-bottom: 10px;
+  font-size: 0.9rem;
+}
+
+.bar-fill.low {
+  background: #dc2626;
+}
+
+.bar-fill.mid {
+  background: #d97706;
+}
+
+.bar-fill.high {
+  background: #16a34a;
+}
+
+.group-tests {
+  margin-top: 14px;
+}
+
+.group-test-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  padding: 8px 0;
+  border-top: 1px solid var(--line-soft);
+}
+
+.add-panel {
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 12px;
+  margin: 10px 0 14px;
+  background: var(--bg-soft);
+}
+
+.add-list {
+  max-height: 260px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 10px 0;
+}
+
+.inline-form select {
+  width: auto;
+  flex: 1;
+  min-width: 150px;
+}
+
+/* ---------- v6: blok ekrani va qoidabuzarlar ---------- */
+.lock-screen {
+  position: fixed;
+  inset: 0;
+  background: #0f172a;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  z-index: 300;
+}
+
+.lock-card {
+  background: #fff;
+  border-radius: 20px;
+  padding: 28px 24px;
+  max-width: 460px;
+  width: 100%;
+  text-align: center;
+}
+
+.lock-icon {
+  color: #dc2626;
+  margin-bottom: 4px;
+}
+
+.lock-code {
+  font-size: 3rem;
+  font-weight: 800;
+  letter-spacing: 0.25em;
+  padding: 12px 0 12px 0.25em;
+  background: #fef2f2;
+  color: #b91c1c;
+  border-radius: 14px;
+  margin: 16px 0;
+}
+
+.vio-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.vio-card {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 16px;
+  border-left: 4px solid #dc2626;
+  margin: 0;
+}
+
+.vio-code {
+  font-size: 1.8rem;
+  font-weight: 800;
+  letter-spacing: 0.15em;
+  color: #b91c1c;
+  background: #fef2f2;
+  border-radius: 10px;
+  padding: 6px 14px;
+}
+
+.vio-main {
+  flex: 1;
+  min-width: 180px;
+}
+
+/* ---------- v7: savol bo'yicha tekshirish, avtomatik ruxsat ---------- */
+.lock-icon-warn {
+  color: #d97706;
+}
+
+.auto-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+  border-left: 4px solid #9ca3af;
+}
+
+.auto-card.on {
+  border-left-color: #16a34a;
+}
+
+.gq-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 8px;
+}
+
+.gq-row {
+  display: grid;
+  grid-template-columns: 150px 1fr auto;
+  gap: 14px;
+  align-items: start;
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+}
+
+.gq-row.gq-pending {
+  border-color: #facc15;
+  background: #fefce8;
+}
+
+.gq-student {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-size: 0.92rem;
+}
+
+.gq-answer {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.gq-ok {
+  color: #15803d;
+  font-weight: 600;
+}
+
+.gq-bad {
+  color: #b91c1c;
+  font-weight: 600;
+}
+
+.gq-blanks {
+  margin-top: 16px;
+}
+
+@media (max-width: 700px) {
+  .gq-row {
+    grid-template-columns: 1fr;
+  }
+}

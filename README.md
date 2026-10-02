@@ -133,6 +133,22 @@ Chop etilgan manzilni (odatda `http://localhost:5173`) oching va administrator s
 - **Yangi natija:** admin ochiq javoblarni baholab bo'lgach, talabaning "Testlar" sahifasi tepasida "Ustoz ishingizni tekshirdi" xabari, "Natijalar" yorlig'ida esa "Yangi natija" belgisi chiqadi; talaba natijani ochgach yo'qoladi.
 - **Natijalarni o'chirish (admin):** "Natijalar" bo'limida axlat qutisi belgisi bitta natijani, belgilangan katakchalar esa bir nechtasini o'chiradi (masalan, sinov testlari). Talaba profilida ham bor. Qaytarib bo'lmaydi; foizlar va reyting qayta hisoblanadi. Bir martalik testning natijasi o'chirilsa, talaba uni qayta topshira oladi. Buning uchun `supabase/migration_v4.sql` ni bir marta ishga tushiring.
 
+**v5 imkoniyatlari (Guruhlar va "Ruxsat berish" oynasi):** `supabase/migration_v5.sql` ni SQL Editor'da bir marta ishga tushiring (oldin `migration_v2.sql` ishga tushirilgan bo'lishi kerak).
+- **Ruxsat berish oynasi (admin → Testlar):** "Ruxsat berish" bosilganda oyna ochiladi: kimga (hamma yoki bitta guruh), savollarni aralashtirish, vaqt oralig'i (masalan, 02.10.2026 10:00 → 12:00) va "Bir martalik". Alohida "Bir martalik" tugmasi olib tashlandi. Ochiq testda "Sozlash" tugmasi shu oynani qayta ochadi.
+- **Guruhlar (admin → Guruhlar):** guruh yarating, nomini bosing: talabalar ro'yxati (qo'shish/chiqarish), guruh uchun testga ruxsat berish, o'rtacha natijalar grafiklari va so'nggi topshirishlar. Guruh o'chirilsa, unga ochilgan testlar yopiladi.
+- Aralashtirish har bir talaba (har bir urinish) uchun alohida tartib beradi; sahifa yangilansa ham tartib o'zgarmaydi.
+
+**v6 imkoniyatlari:** `supabase/migration_v6.sql` ni SQL Editor'da bir marta ishga tushiring.
+- **Test paytida chiqib ketishni nazorat qilish:** talaba test paytida boshqa yorliq, oyna yoki ilovaga o'tsa, test bloklanadi va ekranda 4 xonali kod chiqadi. Bu brauzer tomonidan aniqlanadi, shuning uchun u to'liq himoya emas (masalan, ikkinchi telefonni aniqlay olmaydi). Eng yaxshi natija ustoz sinfda kuzatib turganda.
+- **Qoidabuzarlar (admin):** bloklangan talabalar kod bilan ko'rinadi (tabda qizil son). "Davom ettirish" talabaga bloklangan vaqtni qaytarib, testni qolgan joyidan davom ettiradi. "Tugatish" testni blokdan oldingi javoblari bilan topshiradi.
+- **Har bir bo'lim o'z manzilida:** /talabalar, /testlar, /guruhlar, /qoidabuzarlar, /natijalar (talaba: /testlar, /natijalar, /profil). Sahifa yangilansa, foydalanuvchi o'sha bo'limda qoladi. Netlify uchun `public/_redirects` fayli kerak (loyihada bor).
+- Test topshirilayotganda talabaga boshqa bo'limlar (Natijalar, Profil) ko'rinmaydi.
+
+**v7 imkoniyatlari:** `supabase/migration_v7.sql` ni SQL Editor'da bir marta ishga tushiring.
+- **Savol bo'yicha tekshirish (admin → Natijalar):** testni tanlang, savol raqamini bosing (masalan, 35) va barcha talabalarning shu savolga javoblarini birga ko'rib, "To'g'ri" / "Noto'g'ri" bosing. "Keyingi tekshirilmagan" keyingi savolga o'tadi. Javob bermaganlar avtomatik "noto'g'ri". Talabaning hamma javobi tekshirilgach, ball hisoblanadi va unga "Yangi natija" xabari boradi.
+- **Qoidabuzarlar:** kod olib tashlandi; talaba ismi ko'rinadi, ustoz "Davom ettirish" yoki "Tugatish" bosadi. "Hammasini davom ettirish" tugmasi bor.
+- **Avtomatik ruxsat (Qoidabuzarlar sahifasida):** yoqilsa, talabalar bloklanmaydi, faqat ogohlantirish ko'rishadi va testni davom ettiradi. O'chirilgan bo'lsa, talaba bloklanadi va ustozdan ruxsat so'rashi kerak.
+
 **Test JSON formati:**
 
 ```json
